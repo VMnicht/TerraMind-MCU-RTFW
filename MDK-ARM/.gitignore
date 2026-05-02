@@ -1,0 +1,39 @@
+# IDE and local user settings
+/.vscode/launch.json
+/.vscode/uv4.log.lock
+/.settings
+/.eide/log
+/.eide.usr.ctx.json
+*.uvoptx
+*.uvguix.*
+*.code-workspace
+
+# Generic build output folders
+/build/
+/bin/
+/obj/
+/out/
+/Debug/
+/Release/
+/Listings/
+/Objects/
+
+# Keil MDK / ARMCC / ArmClang build artifacts
+*.axf
+*.elf
+*.hex
+*.bin
+*.map
+*.o
+*.d
+*.dep
+*.crf
+*.lnp
+*.iex
+*.htm
+*.build_log.htm
+*.lst
+
+# eide template files
+*.ept
+*.eide-template
