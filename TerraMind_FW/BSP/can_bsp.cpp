@@ -1,6 +1,6 @@
 #include "can_bsp.h"
 
-#include "../Device/M3508.h"
+#include "../Driver/M3508.h"
 
 CanBsp::TxHeader::TxHeader()
     : id(0u),

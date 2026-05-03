@@ -24,7 +24,7 @@ M3508::State::State()
       multi_turn_deg(0.0f),
       current_ma(0.0f),
       temperature(0),
-      last_command(0)
+      command(0)
 {
 }
 
@@ -35,15 +35,23 @@ M3508::Controller::Controller()
 }
 
 M3508::M3508(uint8_t motor_id)
-    : cfg_(),
-      speed_pid_(cfg_.kp, cfg_.ki, cfg_.kd, cfg_.max_current_ma, cfg_.max_current_ma, 0.0f, 1.0e9f)
+    : M3508(motor_id, Config(), ControlMode::SingleMotor)
 {
-    init_meta(motor_id);
-    CAN_BUS.register_m3508(this);
+}
+
+M3508::M3508(uint8_t motor_id, ControlMode mode)
+    : M3508(motor_id, Config(), mode)
+{
 }
 
 M3508::M3508(uint8_t motor_id, const Config &config)
+    : M3508(motor_id, config, ControlMode::SingleMotor)
+{
+}
+
+M3508::M3508(uint8_t motor_id, const Config &config, ControlMode mode)
     : cfg_(config),
+      control_mode_(mode),
       speed_pid_(cfg_.kp, cfg_.ki, cfg_.kd, cfg_.max_current_ma, cfg_.max_current_ma, 0.0f, 1.0e9f)
 {
     init_meta(motor_id);
@@ -93,6 +101,10 @@ void M3508::update_feedback_data(const uint8_t rx_data[8])
 void M3508::set_target_rpm(float output_rpm)
 {
     state_.target_output_rpm = output_rpm;
+    if (control_mode_ == ControlMode::Component)
+    {
+        return;
+    }
     const int16_t cmd = speed_control_step();
     (void)send_current_command(cmd);
 }
@@ -114,14 +126,24 @@ void M3508::reset_controller()
     speed_pid_.error = 0.0f;
 }
 
+void M3508::set_control_mode(ControlMode mode)
+{
+    control_mode_ = mode;
+}
+
+M3508::ControlMode M3508::get_control_mode() const
+{
+    return control_mode_;
+}
+
 int16_t M3508::speed_control_step()
 {
     const float target_rotor_rpm = state_.target_output_rpm * cfg_.gear_ratio;
     const float error = target_rotor_rpm - state_.rotor_rpm;
     const float current_ma = speed_pid_.PID_ComputeError(error);
 
-    state_.last_command = current_ma_to_can(current_ma);
-    return state_.last_command;
+    state_.command = current_ma_to_can(current_ma);
+    return state_.command;
 }
 
 void M3508::pack_can_command(int16_t c1, int16_t c2, int16_t c3, int16_t c4, uint8_t tx_data[8])
@@ -155,44 +177,19 @@ bool M3508::send_current_command(int16_t current)
     return CAN_BUS.send_raw(tx_header, tx_data);
 }
 
-float M3508::get_target_rpm() const
+const M3508::State &M3508::get_state() const
 {
-    return state_.target_output_rpm;
+    return state_;
 }
 
-float M3508::get_output_rpm() const
+uint8_t M3508::get_motor_id() const
 {
-    return state_.output_rpm;
+    return meta_.motor_id;
 }
 
-float M3508::get_rotor_rpm() const
+bool M3508::is_component_mode() const
 {
-    return state_.rotor_rpm;
-}
-
-float M3508::get_angle_deg() const
-{
-    return state_.angle_deg;
-}
-
-float M3508::get_multi_turn_deg() const
-{
-    return state_.multi_turn_deg;
-}
-
-float M3508::get_current_ma() const
-{
-    return state_.current_ma;
-}
-
-uint8_t M3508::get_temperature() const
-{
-    return state_.temperature;
-}
-
-int16_t M3508::get_last_command() const
-{
-    return state_.last_command;
+    return control_mode_ == ControlMode::Component;
 }
 
 void M3508::update_multi_turn(float now_angle_deg)

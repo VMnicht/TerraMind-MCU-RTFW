@@ -638,16 +638,39 @@
         </Group>
         <Group>
           <GroupName>Device</GroupName>
+        </Group>
+        <Group>
+          <GroupName>Driver</GroupName>
           <Files>
             <File>
               <FileName>M3508.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\TerraMind_FW\Device\M3508.cpp</FilePath>
+              <FilePath>..\TerraMind_FW\Driver\M3508.cpp</FilePath>
             </File>
             <File>
               <FileName>M3508.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\TerraMind_FW\Device\M3508.h</FilePath>
+              <FilePath>..\TerraMind_FW\Driver\M3508.h</FilePath>
+            </File>
+            <File>
+              <FileName>xbox.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\TerraMind_FW\Driver\xbox.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>xbox.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\TerraMind_FW\Driver\xbox.h</FilePath>
+            </File>
+            <File>
+              <FileName>debug_printer.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\TerraMind_FW\Driver\debug_printer.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>debug_printer.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\TerraMind_FW\Driver\debug_printer.h</FilePath>
             </File>
           </Files>
         </Group>

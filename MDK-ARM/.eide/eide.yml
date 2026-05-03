@@ -75,8 +75,8 @@ virtualFolder:
           folders: []
     - name: App
       files:
-        - path: ../TerraMind_FW/App/test.cpp
         - path: ../TerraMind_FW/App/test.h
+        - path: ../TerraMind_FW/App/test.cpp
       folders: []
     - name: Algorithm
       files:
@@ -86,9 +86,7 @@ virtualFolder:
         - path: ../TerraMind_FW/Algorithm/SuperPID.h
       folders: []
     - name: Device
-      files:
-        - path: ../TerraMind_FW/Device/M3508.cpp
-        - path: ../TerraMind_FW/Device/M3508.h
+      files: []
       folders: []
     - name: BSP
       files:
@@ -114,6 +112,15 @@ virtualFolder:
       folders: []
     - name: ::CMSIS
       files: []
+      folders: []
+    - name: Driver
+      files:
+        - path: ../TerraMind_FW/Driver/M3508.cpp
+        - path: ../TerraMind_FW/Driver/M3508.h
+        - path: ../TerraMind_FW/Driver/xbox.cpp
+        - path: ../TerraMind_FW/Driver/xbox.h
+        - path: ../TerraMind_FW/Driver/debug_printer.cpp
+        - path: ../TerraMind_FW/Driver/debug_printer.h
       folders: []
 dependenceList: []
 outDir: build
