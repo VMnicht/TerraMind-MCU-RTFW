@@ -116,31 +116,37 @@ void xbox::msgs_update(uint8_t len, uint8_t *dat)
     {
         // A,B,X,Y按键
         xbox_msgs.Y.btn = dat[0];
-        xbox_msgs.X.btn = dat[1];
-        xbox_msgs.B.btn = dat[2];
-        xbox_msgs.A.btn = dat[3];
-        // 左右肩键
-        xbox_msgs.LB.btn = dat[4];
-        xbox_msgs.RB.btn = dat[5];
-				// 菜单操作键
+        xbox_msgs.B.btn = dat[1];
+        xbox_msgs.A.btn = dat[2];
+        xbox_msgs.X.btn = dat[3];
+        
+        // 菜单操作键
+        xbox_msgs.Share.btn  = dat[4];
+        xbox_msgs.Start.btn  = dat[5];
         xbox_msgs.Select.btn = dat[6];
-        xbox_msgs.Start.btn = dat[7];
-        xbox_msgs.Xbox.btn = dat[8];
-        xbox_msgs.Share.btn = dat[9];
+        xbox_msgs.Xbox.btn   = dat[7];
+
+        // 左右肩键
+        xbox_msgs.LB.btn = dat[8];
+        xbox_msgs.RB.btn = dat[9];
+
         // 左右摇杆按钮
         xbox_msgs.LS.btn = dat[10];
         xbox_msgs.RS.btn = dat[11];
+
         // 十字键
-        xbox_msgs.DPadUp.btn = dat[12];
-        xbox_msgs.DPadRight.btn = dat[13];
-        xbox_msgs.DPadDown.btn = dat[14];
-        xbox_msgs.DPadLeft.btn = dat[15];
-        // 左右摇杆（霍尔值，进行合成变成float类型）
+        xbox_msgs.DPadUp.btn    = dat[12];
+        xbox_msgs.DPadLeft.btn  = dat[13];
+        xbox_msgs.DPadRight.btn = dat[14];
+        xbox_msgs.DPadDown.btn  = dat[15];
+
+        // 左右摇杆（霍尔值，大端模式：高字节在前）
         xbox_msgs.joyLX = ((uint16_t)dat[16] << 8) | dat[17];
         xbox_msgs.joyLY = ((uint16_t)dat[18] << 8) | dat[19];
         xbox_msgs.joyRX = ((uint16_t)dat[20] << 8) | dat[21];
         xbox_msgs.joyRY = ((uint16_t)dat[22] << 8) | dat[23];
-        // 左右扳机键
+        
+        // 左右扳机键（霍尔值，大端模式：高字节在前）
         xbox_msgs.trigL = ((uint16_t)dat[24] << 8) | dat[25];
         xbox_msgs.trigR = ((uint16_t)dat[26] << 8) | dat[27];
     }
