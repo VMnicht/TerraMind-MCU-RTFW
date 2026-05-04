@@ -2,8 +2,13 @@
 
 #include "../Driver/debug_printer.h"
 #include "../Driver/pwm_motor.h"
+#include "../BSP/can_bsp.h"
+#include "../Device/diff_chassis.h"
+#include "../Driver/debug_printer.h"
 
 #include <new>
+
+DebugPrinter g_debug(&huart1);
 
 //M3508差速底盘测试
 namespace
@@ -12,7 +17,6 @@ diff_chassis::MechanicalConfig g_chassis_cfg;
 }
 
 diff_chassis g_chassis(1, 2, g_chassis_cfg);
-DebugPrinter g_debug(&huart1);
 bool g_test_ready = false;
 uint32_t g_test_start_tick = 0;
 
@@ -132,7 +136,6 @@ static const float kTargetStopRpm = 0.0f;
 static const float kTargetForwardRpm = 35.0f;
 static const float kTargetBackwardRpm = -35.0f;
 
-DebugPrinter g_debug(&huart1);
 alignas(PwmMotor) static unsigned char g_pwm_motor_storage[sizeof(PwmMotor)];
 PwmMotor *g_pwm_motor = 0;
 bool g_pwm_test_ready = false;
@@ -195,14 +198,6 @@ float get_target_rpm_by_phase(uint32_t phase)
     }
 }
 } // namespace
-
-extern "C" void AppTest_M3508_Init(void)
-{
-}
-
-extern "C" void AppTest_M3508_TaskStep(void)
-{
-}
 
 extern "C" void AppTest_PwmMotor_Init(void)
 {
