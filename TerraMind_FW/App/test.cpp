@@ -144,12 +144,12 @@ uint32_t g_pwm_test_start_tick = 0u;
 PwmMotor::HardwareConfig build_pwm_motor_hardware_config()
 {
     PwmMotor::HardwareConfig config;
-    config.motor_id = PwmEncBsp::MOTOR_A;
+    config.motor_id = PwmEncBsp::MOTOR_D;
     config.gear_ratio = kMotorGearRatio;
     config.encoder_counts_per_rev = kMotorEncoderCountsPerRev;
     config.control_period_s = kPwmMotorTestPeriodS;
     // 当前 A 口实测为“PWM 正方向”和“编码器正方向”相反，因此这里取 -1。
-    config.direction_sign = -1.0f;
+    config.direction_sign = 1.0f;
     return config;
 }
 

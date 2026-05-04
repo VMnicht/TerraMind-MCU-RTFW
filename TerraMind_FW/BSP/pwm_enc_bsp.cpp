@@ -90,8 +90,8 @@ void PwmEncBsp::bind_motor_config(MotorId motor_id)
         // 电机 A:
         // PWM: PB8 -> TIM10_CH1, PB9 -> TIM11_CH1
         // ENC: PA15/PB3 -> TIM2_CH1/TIM2_CH2
-        config_.pwm_tim_ch1 = &htim10;
-        config_.pwm_tim_ch2 = &htim11;
+        config_.pwm_tim_ch1 = &htim11;
+        config_.pwm_tim_ch2 = &htim10;
         config_.pwm_channel_ch1 = TIM_CHANNEL_1;
         config_.pwm_channel_ch2 = TIM_CHANNEL_1;
         config_.encoder_tim = &htim2;
@@ -131,8 +131,8 @@ void PwmEncBsp::bind_motor_config(MotorId motor_id)
         // ENC: PA0/PA1 -> TIM5_CH1/TIM5_CH2
         config_.pwm_tim_ch1 = &htim1;
         config_.pwm_tim_ch2 = &htim1;
-        config_.pwm_channel_ch1 = TIM_CHANNEL_3;
-        config_.pwm_channel_ch2 = TIM_CHANNEL_4;
+        config_.pwm_channel_ch1 = TIM_CHANNEL_4;
+        config_.pwm_channel_ch2 = TIM_CHANNEL_3;
         config_.encoder_tim = &htim5;
         config_.encoder_channel_a = TIM_CHANNEL_1;
         config_.encoder_channel_b = TIM_CHANNEL_2;
