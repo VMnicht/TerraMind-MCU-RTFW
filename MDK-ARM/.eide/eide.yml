@@ -86,7 +86,9 @@ virtualFolder:
         - path: ../TerraMind_FW/Algorithm/SuperPID.h
       folders: []
     - name: Device
-      files: []
+      files:
+        - path: ../TerraMind_FW/Device/diff_chassis.cpp
+        - path: ../TerraMind_FW/Device/diff_chassis.h
       folders: []
     - name: BSP
       files:

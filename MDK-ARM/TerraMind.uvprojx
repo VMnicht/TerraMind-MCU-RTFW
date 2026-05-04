@@ -638,6 +638,18 @@
         </Group>
         <Group>
           <GroupName>Device</GroupName>
+          <Files>
+            <File>
+              <FileName>diff_chassis.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\TerraMind_FW\Device\diff_chassis.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>diff_chassis.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\TerraMind_FW\Device\diff_chassis.h</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>Driver</GroupName>

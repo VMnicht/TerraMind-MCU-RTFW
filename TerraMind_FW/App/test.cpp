@@ -1,38 +1,48 @@
 #include "test.h"
 
 #include "../BSP/can_bsp.h"
-#include "../Driver/M3508.h"
+#include "../Device/diff_chassis.h"
 #include "../Driver/debug_printer.h"
-#include "../Driver/xbox.h"
 
-M3508 g_motor_3508_1(1);
-DebugPrinter g_debug(&huart1); // 假设使用 USART1 进行调试打印
-xbox g_xbox(&huart4);          // Xbox 接在 UART4
-uint32_t g_last_switch_tick = 0;
-float g_target_output_rpm = 50.0f;
-float g_cmd_target_rpm = 0.0f;
+namespace
+{
+diff_chassis::MechanicalConfig g_chassis_cfg;
+}
+
+diff_chassis g_chassis(1, 2, g_chassis_cfg);
+DebugPrinter g_debug(&huart1);
 bool g_test_ready = false;
-
+uint32_t g_test_start_tick = 0;
 
 extern "C" void AppTest_M3508_Init(void)
 {
+    g_chassis_cfg.wheel_track_m = 0.32f;
+    g_chassis_cfg.wheel_diameter_m = 0.10f;
+    g_chassis_cfg.max_linear_speed_mps = 0.35f;
+    g_chassis_cfg.max_angular_speed_rad = 2.0f;
+
     if (!CAN_BUS.init_default(&hcan1))
     {
         g_test_ready = false;
+        g_debug.printf("diff_chassis test init failed: CAN init error\n");
         return;
     }
 
-    // 使用更保守的测试参数，优先保证运行平稳。
-    g_motor_3508_1.set_pid(10.0f, 0.0f, 0.5f);
-    g_motor_3508_1.reset_controller();
-    g_motor_3508_1.set_target_rpm(0.0f);
-    g_cmd_target_rpm = 0.0f;
-    g_last_switch_tick = HAL_GetTick();
-    g_test_ready = true;
-    g_xbox.startUartReceiveIT();
+    g_chassis.set_mechanical_config(g_chassis_cfg);
 
-    g_debug.printf("M3508 Test Initialized. Target: %.2f RPM\n", g_target_output_rpm);
-    g_debug.printf("Xbox Test Initialized on UART4.\n");
+    // 先使用保守的速度环参数验证差速底盘控制链路。
+    g_chassis.left_motor()->set_pid(10.0f, 0.0f, 0.5f);
+    g_chassis.right_motor()->set_pid(10.0f, 0.0f, 0.5f);
+    g_chassis.left_motor()->reset_controller();
+    g_chassis.right_motor()->reset_controller();
+    g_chassis.stop();
+
+    g_test_start_tick = HAL_GetTick();
+    g_test_ready = true;
+    g_debug.printf("diff_chassis test init ok. track=%.2fm, diameter=%.2fm\n",
+                   g_chassis_cfg.wheel_track_m,
+                   g_chassis_cfg.wheel_diameter_m);
+    g_debug.printf("phase: stop -> forward -> backward -> turn left -> turn right\n");
 }
 
 extern "C" void AppTest_M3508_TaskStep(void)
@@ -43,71 +53,59 @@ extern "C" void AppTest_M3508_TaskStep(void)
     }
 
     const uint32_t now_tick = HAL_GetTick();
-//    if ((now_tick - g_last_switch_tick) >= 5000u)
-//    {
-//        g_last_switch_tick = now_tick;
-//        g_target_output_rpm = -g_target_output_rpm;
-//    }
+    const uint32_t phase_ms = 4000u;
+    const uint32_t phase = ((now_tick - g_test_start_tick) / phase_ms) % 5u;
 
-    // 目标转速斜坡，避免突变目标引发抖动。
-    const float ramp_step_rpm = 0.08f;
-    if (g_cmd_target_rpm < g_target_output_rpm)
+    float cmd_v = 0.0f;
+    float cmd_w = 0.0f;
+    const char *phase_name = "stop";
+
+    switch (phase)
     {
-        g_cmd_target_rpm += ramp_step_rpm;
-        if (g_cmd_target_rpm > g_target_output_rpm)
-        {
-            g_cmd_target_rpm = g_target_output_rpm;
-        }
-    }
-    else if (g_cmd_target_rpm > g_target_output_rpm)
-    {
-        g_cmd_target_rpm -= ramp_step_rpm;
-        if (g_cmd_target_rpm < g_target_output_rpm)
-        {
-            g_cmd_target_rpm = g_target_output_rpm;
-        }
+    case 0u:
+        phase_name = "stop";
+        break;
+    case 1u:
+        cmd_v = 0.20f;
+        phase_name = "forward";
+        break;
+    case 2u:
+        cmd_v = -0.20f;
+        phase_name = "backward";
+        break;
+    case 3u:
+        cmd_w = 1.00f;
+        phase_name = "turn_left";
+        break;
+    default:
+        cmd_w = -1.00f;
+        phase_name = "turn_right";
+        break;
     }
 
-    g_motor_3508_1.set_target_rpm(g_cmd_target_rpm);
+    (void)g_chassis.set_cmd_vel(cmd_v, cmd_w);
 
-    // 每隔 500ms 打印一次电机状态
     static uint32_t last_print_tick = 0;
-    if (now_tick - last_print_tick >= 500u)
+    if ((now_tick - last_print_tick) >= 500u)
     {
         last_print_tick = now_tick;
-        const M3508::State &state = g_motor_3508_1.get_state();
-        g_debug.printf("[M3508] Cmd: %.1f, Output: %.1f, Rotor: %.1f, Temp: %d\n",
-                       g_cmd_target_rpm, state.output_rpm, state.rotor_rpm, state.temperature);
-    }
 
-    static uint32_t last_xbox_print_tick = 0;
-    static uint32_t last_xbox_rx_tick = 0;
-    static XboxOriginData_t last_xbox_snapshot = {};
+        const diff_chassis::WheelTarget target = g_chassis.calc_wheel_target_rpm(cmd_v, cmd_w);
+        const M3508::State &left_state = g_chassis.left_motor()->get_state();
+        const M3508::State &right_state = g_chassis.right_motor()->get_state();
 
-    if (memcmp(&last_xbox_snapshot, &g_xbox.xbox_msgs, sizeof(XboxOriginData_t)) != 0)
-    {
-        last_xbox_snapshot = g_xbox.xbox_msgs;
-        last_xbox_rx_tick = now_tick;
-    }
-
-    if (now_tick - last_xbox_print_tick >= 200u)
-    {
-        last_xbox_print_tick = now_tick;
-        const uint32_t no_rx_ms = now_tick - last_xbox_rx_tick;
-
-        g_debug.printf("[XBOX] %s, noRx=%lums, A:%d B:%d X:%d Y:%d, "
-                       "LX:%u LY:%u RX:%u RY:%u LT:%u RT:%u\n",
-                       (no_rx_ms < 1000u) ? "RX_OK" : "NO_RX",
-                       no_rx_ms,
-                       (int)g_xbox.xbox_msgs.A.btn,
-                       (int)g_xbox.xbox_msgs.B.btn,
-                       (int)g_xbox.xbox_msgs.X.btn,
-                       (int)g_xbox.xbox_msgs.Y.btn,
-                       (unsigned int)g_xbox.xbox_msgs.joyLX,
-                       (unsigned int)g_xbox.xbox_msgs.joyLY,
-                       (unsigned int)g_xbox.xbox_msgs.joyRX,
-                       (unsigned int)g_xbox.xbox_msgs.joyRY,
-                       (unsigned int)g_xbox.xbox_msgs.trigL,
-                       (unsigned int)g_xbox.xbox_msgs.trigR);
+        g_debug.printf("[diff] %s v=%.2f w=%.2f | target(L,R)=%.1f, %.1f rpm\n",
+                       phase_name,
+                       cmd_v,
+                       cmd_w,
+                       target.left_rpm,
+                       target.right_rpm);
+        g_debug.printf("[diff] left out=%.1f rpm cmd=%d temp=%d | right out=%.1f rpm cmd=%d temp=%d\n",
+                       left_state.output_rpm,
+                       left_state.command,
+                       left_state.temperature,
+                       right_state.output_rpm,
+                       right_state.command,
+                       right_state.temperature);
     }
 }
