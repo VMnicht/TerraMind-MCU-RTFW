@@ -684,6 +684,16 @@
               <FileType>5</FileType>
               <FilePath>..\TerraMind_FW\Driver\debug_printer.h</FilePath>
             </File>
+            <File>
+              <FileName>pwm_motor.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\TerraMind_FW\Driver\pwm_motor.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>pwm_motor.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\TerraMind_FW\Driver\pwm_motor.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -708,6 +718,16 @@
               <FileName>can_bsp.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\TerraMind_FW\BSP\can_bsp.h</FilePath>
+            </File>
+            <File>
+              <FileName>pwm_enc_bsp.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\TerraMind_FW\BSP\pwm_enc_bsp.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>pwm_enc_bsp.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\TerraMind_FW\BSP\pwm_enc_bsp.h</FilePath>
             </File>
           </Files>
         </Group>

@@ -96,6 +96,8 @@ virtualFolder:
         - path: ../TerraMind_FW/BSP/Serial_device.h
         - path: ../TerraMind_FW/BSP/can_bsp.cpp
         - path: ../TerraMind_FW/BSP/can_bsp.h
+        - path: ../TerraMind_FW/BSP/pwm_enc_bsp.cpp
+        - path: ../TerraMind_FW/BSP/pwm_enc_bsp.h
       folders: []
     - name: OSAL
       files:
@@ -123,6 +125,8 @@ virtualFolder:
         - path: ../TerraMind_FW/Driver/xbox.h
         - path: ../TerraMind_FW/Driver/debug_printer.cpp
         - path: ../TerraMind_FW/Driver/debug_printer.h
+        - path: ../TerraMind_FW/Driver/pwm_motor.cpp
+        - path: ../TerraMind_FW/Driver/pwm_motor.h
       folders: []
 dependenceList: []
 outDir: build

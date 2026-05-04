@@ -116,13 +116,13 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
-  AppTest_M3508_Init();
+  AppTest_PwmMotor_Init();
 
   /* Infinite loop */
   for(;;)
   {
-    AppTest_M3508_TaskStep();
-    osDelay(2);
+    AppTest_PwmMotor_TaskStep();
+    osDelay(10);
   }
   /* USER CODE END StartDefaultTask */
 }
