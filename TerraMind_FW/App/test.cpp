@@ -117,6 +117,8 @@ extern "C" void AppTest_M3508_TaskStep(void)
 }
 
 //PWM电机测试
+float pwm_kp = 1200.0f;
+float pwm_kd = 5.0f;
 namespace
 {
 // PWM 电机测试任务周期。
@@ -131,10 +133,9 @@ static const float kPwmMotorTestPeriodS = 0.01f;
 static const float kMotorGearRatio = 30.0f;
 static const uint32_t kMotorEncoderCountsPerRev = 52u;
 
-// 速度测试采用保守目标值，先验证 PWM 方向、编码器反馈和闭环链路是否正常。
+// 速度测试采用单方向旋转后停转的方式循环，便于观察起转、稳态和刹停效果。
 static const float kTargetStopRpm = 0.0f;
-static const float kTargetForwardRpm = 35.0f;
-static const float kTargetBackwardRpm = -35.0f;
+static const float kTargetForwardRpm = 200.0f;
 
 alignas(PwmMotor) static unsigned char g_pwm_motor_storage[sizeof(PwmMotor)];
 PwmMotor *g_pwm_motor = 0;
@@ -158,11 +159,11 @@ PwmMotor::SpeedPidConfig build_pwm_motor_pid_config()
     PwmMotor::SpeedPidConfig config;
 
     // 测试阶段先使用较保守的速度环参数，避免第一次上电就给出过猛输出。
-    config.kp = 1200.0f;
-    config.ki = 30.0f;
-    config.kd = 3.0f;
+    config.kp = pwm_kp;
+    config.ki = 0.0f;
+    config.kd = pwm_kd;
     config.integral_limit = 3000.0f;
-    config.output_limit = 12000.0f;
+    config.output_limit = 65535.0f;
     config.deadzone = 0.5f;
     config.integral_separation_threshold = 50.0f;
     return config;
@@ -173,13 +174,9 @@ const char *get_test_phase_name(uint32_t phase)
     switch (phase)
     {
     case 0u:
-        return "stop_1";
-    case 1u:
         return "forward";
-    case 2u:
-        return "stop_2";
     default:
-        return "backward";
+        return "stop";
     }
 }
 
@@ -188,13 +185,9 @@ float get_target_rpm_by_phase(uint32_t phase)
     switch (phase)
     {
     case 0u:
-        return kTargetStopRpm;
-    case 1u:
         return kTargetForwardRpm;
-    case 2u:
-        return kTargetStopRpm;
     default:
-        return kTargetBackwardRpm;
+        return kTargetStopRpm;
     }
 }
 } // namespace
@@ -216,7 +209,7 @@ extern "C" void AppTest_PwmMotor_Init(void)
                    kMotorGearRatio,
                    (unsigned long)kMotorEncoderCountsPerRev,
                    -1.0f);
-    g_debug.printf("[pwm_motor] phase: stop -> forward -> stop -> backward\n");
+    g_debug.printf("[pwm_motor] phase: forward(20s) -> stop(20s)\n");
 }
 
 extern "C" void AppTest_PwmMotor_TaskStep(void)
@@ -227,8 +220,8 @@ extern "C" void AppTest_PwmMotor_TaskStep(void)
     }
 
     const uint32_t now_tick = HAL_GetTick();
-    const uint32_t phase_ms = 3000u;
-    const uint32_t phase = ((now_tick - g_pwm_test_start_tick) / phase_ms) % 4u;
+    const uint32_t phase_ms = 20000u;
+    const uint32_t phase = ((now_tick - g_pwm_test_start_tick) / phase_ms) % 2u;
     const float target_rpm = get_target_rpm_by_phase(phase);
     const char *phase_name = get_test_phase_name(phase);
 
