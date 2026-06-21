@@ -3,13 +3,14 @@
 #include "../Driver/debug_printer.h"
 #include "../Driver/pwm_motor.h"
 #include "../Driver/pwm_servo.h"
+#include "../Driver/pwm_esc.h"
 #include "../BSP/can_bsp.h"
 #include "../Device/diff_chassis.h"
 #include "../Driver/debug_printer.h"
 
 #include <new>
 
-DebugPrinter g_debug(&huart1);
+DebugPrinter g_debug(&huart3);
 
 //M3508差速底盘测试
 namespace
@@ -332,5 +333,187 @@ extern "C" void AppTest_ServoA_TaskStep(void)
                        phase_name,
                        target_angle,
                        g_servo_a->get_current_angle());
+    }
+}
+
+// ==================== 电调测试代码 ====================
+// 测试目标：验证 PWM 电调驱动是否正常工作
+// 测试流程：空转(5秒) → 20%油门(5秒) → 停止(保持)
+// 电调A使用 TIM13 (PA6)，电调B使用 TIM14 (PA7)
+// ======================================================
+
+namespace
+{
+// 测试参数配置
+static const uint32_t kEscSwitchDelayMs = 5000u;      // 每个阶段持续时间：5秒
+static const float kEscTargetIdlePercent = 0.0f;      // 空转油门：0%（1ms脉宽，电调不转）
+static const float kEscTargetForwardPercent = 20.0f;   // 正转油门：20%（1.2ms脉宽，电机慢速转动）
+static const float kEscTargetStopPercent = 0.0f;       // 停止油门：0%（1ms脉宽，电调停止）
+
+// 电调A的全局变量
+// 使用 placement new 在静态内存上分配对象，避免动态内存分配
+alignas(PwmEsc) static unsigned char g_esc_a_storage[sizeof(PwmEsc)];
+PwmEsc *g_esc_a = 0;                    // 电调A对象指针
+bool g_esc_a_test_ready = false;        // 电调A测试是否就绪
+uint32_t g_esc_a_test_start_tick = 0u;  // 电调A测试开始时间戳
+
+// 电调B的全局变量（与电调A结构相同）
+alignas(PwmEsc) static unsigned char g_esc_b_storage[sizeof(PwmEsc)];
+PwmEsc *g_esc_b = 0;                    // 电调B对象指针
+bool g_esc_b_test_ready = false;        // 电调B测试是否就绪
+uint32_t g_esc_b_test_start_tick = 0u;  // 电调B测试开始时间戳
+
+// 构建电调A的硬件配置
+PwmEsc::HardwareConfig build_esc_a_hardware_config()
+{
+    PwmEsc::HardwareConfig config;
+    config.esc_id = PwmEscBsp::ESC_A;   // 使用ESC_A接口（TIM13, PA6）
+    config.min_throttle_compare = 1000u; // 0%油门对应1ms脉宽（1000个计数）
+    config.max_throttle_compare = 2000u; // 100%油门对应2ms脉宽（2000个计数）
+    return config;
+}
+
+// 构建电调B的硬件配置
+PwmEsc::HardwareConfig build_esc_b_hardware_config()
+{
+    PwmEsc::HardwareConfig config;
+    config.esc_id = PwmEscBsp::ESC_B;   // 使用ESC_B接口（TIM14, PA7）
+    config.min_throttle_compare = 1000u; // 0%油门对应1ms脉宽
+    config.max_throttle_compare = 2000u; // 100%油门对应2ms脉宽
+    return config;
+}
+
+// 获取测试阶段名称（用于调试输出）
+const char *get_esc_phase_name(uint32_t phase)
+{
+    switch (phase)
+    {
+    case 0u:
+        return "idle";      // 阶段0：空转
+    case 1u:
+        return "forward";   // 阶段1：正转
+    default:
+        return "stop";      // 阶段2：停止
+    }
+}
+
+// 根据测试阶段获取目标油门值
+float get_esc_target_throttle(uint32_t phase)
+{
+    switch (phase)
+    {
+    case 0u:
+        return kEscTargetIdlePercent;      // 阶段0：0%油门
+    case 1u:
+        return kEscTargetForwardPercent;   // 阶段1：20%油门
+    default:
+        return kEscTargetStopPercent;      // 阶段2：0%油门
+    }
+}
+} // namespace
+
+// ==================== 电调A测试函数 ====================
+
+// 电调A初始化函数
+// 在FreeRTOS任务启动时调用一次
+extern "C" void AppTest_EscA_Init(void)
+{
+    // 如果电调A对象还未创建，则创建它
+    if (g_esc_a == 0)
+    {
+        const PwmEsc::HardwareConfig hardware_config = build_esc_a_hardware_config();
+        // 使用placement new在预分配的内存上创建对象
+        g_esc_a = new (g_esc_a_storage) PwmEsc(hardware_config);
+    }
+
+    // 记录测试开始时间
+    g_esc_a_test_start_tick = HAL_GetTick();
+    g_esc_a_test_ready = true;
+
+    // 打印测试流程说明
+    g_debug.printf("[esc_a] init ok. phase: idle(5s) -> forward(5s) -> stop(keep)\n");
+}
+
+// 电调A任务循环函数
+// 在FreeRTOS任务中周期性调用（每2ms调用一次）
+extern "C" void AppTest_EscA_TaskStep(void)
+{
+    // 安全检查：如果测试未就绪或对象未创建，直接返回
+    if (!g_esc_a_test_ready || g_esc_a == 0)
+    {
+        return;
+    }
+
+    // 计算当前时间和已过去的时间
+    const uint32_t now_tick = HAL_GetTick();
+    const uint32_t elapsed_ms = now_tick - g_esc_a_test_start_tick;
+
+    // 根据已过去的时间判断当前处于哪个测试阶段
+    // 阶段0（0-5秒）：空转
+    // 阶段1（5-10秒）：20%油门正转
+    // 阶段2（10秒后）：停止
+    const uint32_t phase = (elapsed_ms < kEscSwitchDelayMs) ? 0u : ((elapsed_ms < kEscSwitchDelayMs * 2u) ? 1u : 2u);
+
+    // 获取当前阶段的目标油门和阶段名称
+    const float target_throttle = get_esc_target_throttle(phase);
+    const char *phase_name = get_esc_phase_name(phase);
+
+    // 设置电调油门
+    (void)g_esc_a->set_throttle(target_throttle);
+
+    // 每500ms打印一次调试信息
+    static uint32_t last_print_tick = 0u;
+    if ((now_tick - last_print_tick) >= 500u)
+    {
+        last_print_tick = now_tick;
+        g_debug.printf("[esc_a] %s target=%.1f%% current=%.1f%%\n",
+                       phase_name,
+                       target_throttle,
+                       g_esc_a->get_current_throttle());
+    }
+}
+
+// ==================== 电调B测试函数 ====================
+// 电调B的测试逻辑与电调A完全相同，只是使用不同的硬件接口
+
+// 电调B初始化函数
+extern "C" void AppTest_EscB_Init(void)
+{
+    if (g_esc_b == 0)
+    {
+        const PwmEsc::HardwareConfig hardware_config = build_esc_b_hardware_config();
+        g_esc_b = new (g_esc_b_storage) PwmEsc(hardware_config);
+    }
+
+    g_esc_b_test_start_tick = HAL_GetTick();
+    g_esc_b_test_ready = true;
+
+    g_debug.printf("[esc_b] init ok. phase: idle(5s) -> forward(5s) -> stop(keep)\n");
+}
+
+// 电调B任务循环函数
+extern "C" void AppTest_EscB_TaskStep(void)
+{
+    if (!g_esc_b_test_ready || g_esc_b == 0)
+    {
+        return;
+    }
+
+    const uint32_t now_tick = HAL_GetTick();
+    const uint32_t elapsed_ms = now_tick - g_esc_b_test_start_tick;
+    const uint32_t phase = (elapsed_ms < kEscSwitchDelayMs) ? 0u : ((elapsed_ms < kEscSwitchDelayMs * 2u) ? 1u : 2u);
+    const float target_throttle = get_esc_target_throttle(phase);
+    const char *phase_name = get_esc_phase_name(phase);
+
+    (void)g_esc_b->set_throttle(target_throttle);
+
+    static uint32_t last_print_tick = 0u;
+    if ((now_tick - last_print_tick) >= 500u)
+    {
+        last_print_tick = now_tick;
+        g_debug.printf("[esc_b] %s target=%.1f%% current=%.1f%%\n",
+                       phase_name,
+                       target_throttle,
+                       g_esc_b->get_current_throttle());
     }
 }

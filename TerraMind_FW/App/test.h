@@ -12,6 +12,10 @@ void AppTest_PwmMotor_Init(void);
 void AppTest_PwmMotor_TaskStep(void);
 void AppTest_ServoA_Init(void);
 void AppTest_ServoA_TaskStep(void);
+void AppTest_EscA_Init(void);
+void AppTest_EscA_TaskStep(void);
+void AppTest_EscB_Init(void);
+void AppTest_EscB_TaskStep(void);
 
 #ifdef __cplusplus
 }
