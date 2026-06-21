@@ -691,6 +691,16 @@
               <FileType>5</FileType>
               <FilePath>..\TerraMind_FW\Driver\pwm_motor.h</FilePath>
             </File>
+            <File>
+              <FileName>pwm_servo.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\TerraMind_FW\Driver\pwm_servo.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>pwm_servo.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\TerraMind_FW\Driver\pwm_servo.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -725,6 +735,16 @@
               <FileName>pwm_enc_bsp.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\TerraMind_FW\BSP\pwm_enc_bsp.h</FilePath>
+            </File>
+            <File>
+              <FileName>pwm_servo_bsp.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\TerraMind_FW\BSP\pwm_servo_bsp.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>pwm_servo_bsp.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\TerraMind_FW\BSP\pwm_servo_bsp.h</FilePath>
             </File>
           </Files>
         </Group>

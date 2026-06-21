@@ -117,12 +117,14 @@ void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
   AppTest_PwmMotor_Init();
+  AppTest_ServoA_Init();
 
   /* Infinite loop */
   for(;;)
   {
     AppTest_PwmMotor_TaskStep();
-    osDelay(10);
+    AppTest_ServoA_TaskStep();
+    osDelay(2);
   }
   /* USER CODE END StartDefaultTask */
 }

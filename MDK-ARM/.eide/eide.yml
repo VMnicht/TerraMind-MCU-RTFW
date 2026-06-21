@@ -75,8 +75,8 @@ virtualFolder:
           folders: []
     - name: App
       files:
-        - path: ../TerraMind_FW/App/test.h
         - path: ../TerraMind_FW/App/test.cpp
+        - path: ../TerraMind_FW/App/test.h
       folders: []
     - name: Algorithm
       files:
@@ -90,6 +90,19 @@ virtualFolder:
         - path: ../TerraMind_FW/Device/diff_chassis.cpp
         - path: ../TerraMind_FW/Device/diff_chassis.h
       folders: []
+    - name: Driver
+      files:
+        - path: ../TerraMind_FW/Driver/M3508.cpp
+        - path: ../TerraMind_FW/Driver/M3508.h
+        - path: ../TerraMind_FW/Driver/xbox.cpp
+        - path: ../TerraMind_FW/Driver/xbox.h
+        - path: ../TerraMind_FW/Driver/debug_printer.cpp
+        - path: ../TerraMind_FW/Driver/debug_printer.h
+        - path: ../TerraMind_FW/Driver/pwm_motor.cpp
+        - path: ../TerraMind_FW/Driver/pwm_motor.h
+        - path: ../TerraMind_FW/Driver/pwm_servo.cpp
+        - path: ../TerraMind_FW/Driver/pwm_servo.h
+      folders: []
     - name: BSP
       files:
         - path: ../TerraMind_FW/BSP/Serial_device.cpp
@@ -98,6 +111,8 @@ virtualFolder:
         - path: ../TerraMind_FW/BSP/can_bsp.h
         - path: ../TerraMind_FW/BSP/pwm_enc_bsp.cpp
         - path: ../TerraMind_FW/BSP/pwm_enc_bsp.h
+        - path: ../TerraMind_FW/BSP/pwm_servo_bsp.cpp
+        - path: ../TerraMind_FW/BSP/pwm_servo_bsp.h
       folders: []
     - name: OSAL
       files:
@@ -116,17 +131,6 @@ virtualFolder:
       folders: []
     - name: ::CMSIS
       files: []
-      folders: []
-    - name: Driver
-      files:
-        - path: ../TerraMind_FW/Driver/M3508.cpp
-        - path: ../TerraMind_FW/Driver/M3508.h
-        - path: ../TerraMind_FW/Driver/xbox.cpp
-        - path: ../TerraMind_FW/Driver/xbox.h
-        - path: ../TerraMind_FW/Driver/debug_printer.cpp
-        - path: ../TerraMind_FW/Driver/debug_printer.h
-        - path: ../TerraMind_FW/Driver/pwm_motor.cpp
-        - path: ../TerraMind_FW/Driver/pwm_motor.h
       folders: []
 dependenceList: []
 outDir: build
@@ -153,7 +157,8 @@ targets:
         - RTE/_TerraMind
       libList: []
     excludeList: []
-    settings: {}
+    settings:
+      debugger: cortex-debug
     toolchain: AC6
     toolchainConfigMap:
       AC6:

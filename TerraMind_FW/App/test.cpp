@@ -2,6 +2,7 @@
 
 #include "../Driver/debug_printer.h"
 #include "../Driver/pwm_motor.h"
+#include "../Driver/pwm_servo.h"
 #include "../BSP/can_bsp.h"
 #include "../Device/diff_chassis.h"
 #include "../Driver/debug_printer.h"
@@ -133,9 +134,12 @@ static const float kPwmMotorTestPeriodS = 0.01f;
 static const float kMotorGearRatio = 30.0f;
 static const uint32_t kMotorEncoderCountsPerRev = 52u;
 
-// 速度测试采用单方向旋转后停转的方式循环，便于观察起转、稳态和刹停效果。
+// 速度测试要求：
+// 1. 上电后前 5s 保持停转
+// 2. 5s 后开始按当前目标转速持续旋转
 static const float kTargetStopRpm = 0.0f;
 static const float kTargetForwardRpm = 200.0f;
+static const uint32_t kPwmMotorStartDelayMs = 5000u;
 
 alignas(PwmMotor) static unsigned char g_pwm_motor_storage[sizeof(PwmMotor)];
 PwmMotor *g_pwm_motor = 0;
@@ -145,7 +149,7 @@ uint32_t g_pwm_test_start_tick = 0u;
 PwmMotor::HardwareConfig build_pwm_motor_hardware_config()
 {
     PwmMotor::HardwareConfig config;
-    config.motor_id = PwmEncBsp::MOTOR_D;
+    config.motor_id = PwmEncBsp::MOTOR_A;
     config.gear_ratio = kMotorGearRatio;
     config.encoder_counts_per_rev = kMotorEncoderCountsPerRev;
     config.control_period_s = kPwmMotorTestPeriodS;
@@ -174,9 +178,9 @@ const char *get_test_phase_name(uint32_t phase)
     switch (phase)
     {
     case 0u:
-        return "forward";
-    default:
         return "stop";
+    default:
+        return "forward";
     }
 }
 
@@ -185,9 +189,53 @@ float get_target_rpm_by_phase(uint32_t phase)
     switch (phase)
     {
     case 0u:
-        return kTargetForwardRpm;
-    default:
         return kTargetStopRpm;
+    default:
+        return kTargetForwardRpm;
+    }
+}
+} // namespace
+
+namespace
+{
+static const uint32_t kServoASwitchDelayMs = 10000u;
+static const float kServoATargetPositiveDeg = -80.0f;
+static const float kServoATargetNegativeDeg = 135.0f;
+
+alignas(PwmServo) static unsigned char g_servo_a_storage[sizeof(PwmServo)];
+PwmServo *g_servo_a = 0;
+bool g_servo_a_test_ready = false;
+uint32_t g_servo_a_test_start_tick = 0u;
+
+PwmServo::HardwareConfig build_servo_a_hardware_config()
+{
+    PwmServo::HardwareConfig config;
+    config.servo_id = PwmServoBsp::SERVO_A;
+    config.max_angle_deg = 270.0f;
+    config.center_compare = 1825.0f;
+    config.compare_delta = 115.0f;
+    return config;
+}
+
+const char *get_servo_a_phase_name(uint32_t phase)
+{
+    switch (phase)
+    {
+    case 0u:
+        return "negative_hold";
+    default:
+        return "positive_hold";
+    }
+}
+
+float get_servo_a_target_angle(uint32_t phase)
+{
+    switch (phase)
+    {
+    case 0u:
+        return kServoATargetNegativeDeg;
+    default:
+        return kServoATargetPositiveDeg;
     }
 }
 } // namespace
@@ -209,7 +257,7 @@ extern "C" void AppTest_PwmMotor_Init(void)
                    kMotorGearRatio,
                    (unsigned long)kMotorEncoderCountsPerRev,
                    -1.0f);
-    g_debug.printf("[pwm_motor] phase: forward(20s) -> stop(20s)\n");
+    g_debug.printf("[pwm_motor] phase: stop(5s) -> forward(keep)\n");
 }
 
 extern "C" void AppTest_PwmMotor_TaskStep(void)
@@ -220,8 +268,8 @@ extern "C" void AppTest_PwmMotor_TaskStep(void)
     }
 
     const uint32_t now_tick = HAL_GetTick();
-    const uint32_t phase_ms = 20000u;
-    const uint32_t phase = ((now_tick - g_pwm_test_start_tick) / phase_ms) % 2u;
+    const uint32_t elapsed_ms = now_tick - g_pwm_test_start_tick;
+    const uint32_t phase = (elapsed_ms < kPwmMotorStartDelayMs) ? 0u : 1u;
     const float target_rpm = get_target_rpm_by_phase(phase);
     const char *phase_name = get_test_phase_name(phase);
 
@@ -236,5 +284,53 @@ extern "C" void AppTest_PwmMotor_TaskStep(void)
                        phase_name,
                        target_rpm,
                        g_pwm_motor->get_current_rpm());
+    }
+}
+
+extern "C" void AppTest_ServoA_Init(void)
+{
+    if (g_servo_a == 0)
+    {
+        const PwmServo::HardwareConfig hardware_config = build_servo_a_hardware_config();
+        g_servo_a = new (g_servo_a_storage) PwmServo(hardware_config);
+    }
+
+    if (g_servo_a == 0)
+    {
+        g_servo_a_test_ready = false;
+        g_debug.printf("[servo_a] init failed\n");
+        return;
+    }
+
+    (void)g_servo_a->set_angle(kServoATargetNegativeDeg);
+    g_servo_a_test_start_tick = HAL_GetTick();
+    g_servo_a_test_ready = true;
+
+    g_debug.printf("[servo_a] init ok. phase: negative(10s) -> positive(keep)\n");
+}
+
+extern "C" void AppTest_ServoA_TaskStep(void)
+{
+    if (!g_servo_a_test_ready || g_servo_a == 0)
+    {
+        return;
+    }
+
+    const uint32_t now_tick = HAL_GetTick();
+    const uint32_t elapsed_ms = now_tick - g_servo_a_test_start_tick;
+    const uint32_t phase = (elapsed_ms < kServoASwitchDelayMs) ? 0u : 1u;
+    const float target_angle = get_servo_a_target_angle(phase);
+    const char *phase_name = get_servo_a_phase_name(phase);
+
+    (void)g_servo_a->set_angle(target_angle);
+
+    static uint32_t last_print_tick = 0u;
+    if ((now_tick - last_print_tick) >= 500u)
+    {
+        last_print_tick = now_tick;
+        g_debug.printf("[servo_a] %s target=%.1f deg current=%.1f deg\n",
+                       phase_name,
+                       target_angle,
+                       g_servo_a->get_current_angle());
     }
 }
