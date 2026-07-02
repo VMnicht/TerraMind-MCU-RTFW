@@ -19,7 +19,7 @@ extern "C"
 #define CMD_FRAME_HEAD_1 0xFB
 #define CMD_FRAME_END_0  0xFD
 #define CMD_FRAME_END_1  0xFE
-#define CMD_DATA_LENGTH  9
+#define CMD_DATA_LENGTH  11
 #define CMD_RX_BUF_SIZE  64
 
 struct CmdData
@@ -27,6 +27,8 @@ struct CmdData
     float linear_speed;
     float angular_speed;
     bool left_seeder;
+    bool right_seeder;
+    bool mowing;
 };
 
 class cmd_port : public SerialDevice

@@ -116,4 +116,6 @@ void cmd_port::parse_data(const uint8_t *dat, uint8_t len)
     cmd.linear_speed = linear;
     cmd.angular_speed = angular;
     cmd.left_seeder = (dat[8] != 0u);
+    cmd.right_seeder = (dat[9] != 0u);
+    cmd.mowing = (dat[10] != 0u);
 }
