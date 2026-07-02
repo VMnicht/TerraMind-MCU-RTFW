@@ -26,7 +26,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "can.h"
-#include "../../TerraMind_FW/App/test.h"
+#include "../../TerraMind_FW/App/app_main.h"
 
 /* USER CODE END Includes */
 
@@ -116,18 +116,12 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
-  AppTest_PwmMotor_Init();
-  AppTest_ServoA_Init();
-  AppTest_EscA_Init();
-  AppTest_EscB_Init();
+  App_TestInit();
 
   /* Infinite loop */
   for(;;)
   {
-    AppTest_PwmMotor_TaskStep();
-    AppTest_ServoA_TaskStep();
-    AppTest_EscA_TaskStep();
-    AppTest_EscB_TaskStep();
+    App_TestStep();
     osDelay(2);
   }
   /* USER CODE END StartDefaultTask */

@@ -600,14 +600,14 @@
           <GroupName>App</GroupName>
           <Files>
             <File>
-              <FileName>test.cpp</FileName>
+              <FileName>app_main.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\TerraMind_FW\App\test.cpp</FilePath>
+              <FilePath>..\TerraMind_FW\App\app_main.cpp</FilePath>
             </File>
             <File>
-              <FileName>test.h</FileName>
+              <FileName>app_main.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\TerraMind_FW\App\test.h</FilePath>
+              <FilePath>..\TerraMind_FW\App\app_main.h</FilePath>
             </File>
           </Files>
         </Group>
@@ -713,6 +713,16 @@
               <FileName>pwm_esc.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\TerraMind_FW\Driver\pwm_esc.h</FilePath>
+            </File>
+            <File>
+              <FileName>cmd_port.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\TerraMind_FW\Driver\cmd_port.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>cmd_port.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\TerraMind_FW\Driver\cmd_port.h</FilePath>
             </File>
           </Files>
         </Group>

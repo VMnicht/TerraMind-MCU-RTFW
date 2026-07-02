@@ -41,8 +41,8 @@ diff_chassis::diff_chassis(M3508 *left_motor, M3508 *right_motor, const Mechanic
 // 构造函数 2：内部动态分配电机
 diff_chassis::diff_chassis(uint8_t left_motor_id, uint8_t right_motor_id, const MechanicalConfig &cfg)
     : cfg_(cfg),
-      left_motor_(0),
-      right_motor_(0),
+			left_motor_(nullptr),
+      right_motor_(nullptr),
       own_motors_(true) // 标记为内部实例，析构时需要 delete
 {
     // 创建时直接指定为 Component 模式

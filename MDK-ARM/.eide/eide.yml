@@ -77,6 +77,8 @@ virtualFolder:
       files:
         - path: ../TerraMind_FW/App/test.cpp
         - path: ../TerraMind_FW/App/test.h
+        - path: ../TerraMind_FW/App/app_main.cpp
+        - path: ../TerraMind_FW/App/app_main.h
       folders: []
     - name: Algorithm
       files:
@@ -102,6 +104,10 @@ virtualFolder:
         - path: ../TerraMind_FW/Driver/pwm_motor.h
         - path: ../TerraMind_FW/Driver/pwm_servo.cpp
         - path: ../TerraMind_FW/Driver/pwm_servo.h
+        - path: ../TerraMind_FW/Driver/pwm_esc.cpp
+        - path: ../TerraMind_FW/Driver/pwm_esc.h
+        - path: ../TerraMind_FW/Driver/cmd_port.cpp
+        - path: ../TerraMind_FW/Driver/cmd_port.h
       folders: []
     - name: BSP
       files:
