@@ -6,6 +6,7 @@
 #include "../Driver/pwm_motor.h"
 #include "../Driver/pwm_servo.h"
 #include "../Driver/debug_printer.h"
+#include "../Driver/pwm_esc.h"
 
 #include <new>
 
@@ -23,12 +24,21 @@ static PwmServo *g_seeder_servo = nullptr;
 alignas(PwmMotor) static unsigned char g_motor_buf[sizeof(PwmMotor)];
 static PwmMotor *g_seeder_motor = nullptr;
 
+alignas(PwmServo) static unsigned char g_servo_r_buf[sizeof(PwmServo)];
+static PwmServo *g_seeder_servo_r = nullptr;
+alignas(PwmMotor) static unsigned char g_motor_r_buf[sizeof(PwmMotor)];
+static PwmMotor *g_seeder_motor_r = nullptr;
+
+alignas(PwmEsc) static unsigned char g_esc_buf[sizeof(PwmEsc)];
+static PwmEsc *g_mowing_esc = nullptr;
+
 static void init_chassis()
 {
     g_chassis_cfg.wheel_track_m = 0.32f;
     g_chassis_cfg.wheel_diameter_m = 0.10f;
     g_chassis_cfg.max_linear_speed_mps = 0.35f;
     g_chassis_cfg.max_angular_speed_rad = 2.0f;
+		g_chassis_cfg.right_reversed = true;
 
     if (!CAN_BUS.init_default(&hcan1))
     {
@@ -83,14 +93,54 @@ static void init_seeder()
 
     g_seeder_motor = new (g_motor_buf) PwmMotor(motor_hw, motor_pid);
 
-    g_debug.printf("[app] seeder ok (servo_A + motor_A)\n");
+    // 右侧舵机：SERVO_B
+    PwmServo::HardwareConfig servo_r_cfg;
+    servo_r_cfg.servo_id = PwmServoBsp::SERVO_B;
+    servo_r_cfg.max_angle_deg = 270.0f;
+    servo_r_cfg.center_compare = 1825.0f;
+    servo_r_cfg.compare_delta = 115.0f;
+    g_seeder_servo_r = new (g_servo_r_buf) PwmServo(servo_r_cfg);
+    g_seeder_servo_r->set_angle(135.0f);
+
+    // 右侧电机：MOTOR_B（方向与左相反）
+    PwmMotor::HardwareConfig motor_r_hw;
+    motor_r_hw.motor_id = PwmEncBsp::MOTOR_D;
+    motor_r_hw.gear_ratio = 30.0f;
+    motor_r_hw.encoder_counts_per_rev = 52u;
+    motor_r_hw.control_period_s = 0.002f;
+    motor_r_hw.direction_sign = 1.0f;
+
+    PwmMotor::SpeedPidConfig motor_r_pid;
+    motor_r_pid.kp = 1200.0f;
+    motor_r_pid.ki = 0.0f;
+    motor_r_pid.kd = 5.0f;
+    motor_r_pid.integral_limit = 3000.0f;
+    motor_r_pid.output_limit = 65535.0f;
+    motor_r_pid.deadzone = 0.5f;
+    motor_r_pid.integral_separation_threshold = 50.0f;
+
+    g_seeder_motor_r = new (g_motor_r_buf) PwmMotor(motor_r_hw, motor_r_pid);
+
+    g_debug.printf("[app] seeder ok (L:A+L:A + R:B+R:B)\n");
 }
 
-extern "C" void App_Init(void)
+static void init_mowing()
+{
+    PwmEsc::HardwareConfig esc_cfg;
+    esc_cfg.esc_id = PwmEscBsp::ESC_A;
+    esc_cfg.min_throttle_compare = 1000u;
+    esc_cfg.max_throttle_compare = 2000u;
+    g_mowing_esc = new (g_esc_buf) PwmEsc(esc_cfg);
+    g_mowing_esc->emergency_stop();
+    g_debug.printf("[app] mowing ok (ESC_A)\n");
+}
+
+extern "C" void App_ControlInit(void)
 {
     init_chassis();
     init_cmd_port();
     init_seeder();
+    init_mowing();
 }
 
 static void run_control_loop()
@@ -127,80 +177,129 @@ static void run_control_loop()
             g_seeder_motor->control_speed(0.0f);
         }
     }
+
+    // right_seeder
+    if (g_seeder_servo_r != nullptr)
+    {
+        if (c.right_seeder)
+        {
+            g_seeder_servo_r->set_angle(-80.0f);
+        }
+        else
+        {
+            g_seeder_servo_r->set_angle(135.0f);
+        }
+    }
+
+    if (g_seeder_motor_r != nullptr)
+    {
+        if (c.right_seeder)
+        {
+            g_seeder_motor_r->control_speed(-200.0f);
+        }
+        else
+        {
+            g_seeder_motor_r->control_speed(0.0f);
+        }
+    }
+
+    // mowing (ESC_A)
+    if (g_mowing_esc != nullptr)
+    {
+        if (c.mowing)
+        {
+            g_mowing_esc->set_throttle(20.0f);
+        }
+        else
+        {
+            g_mowing_esc->set_throttle(0.0f);
+        }
+    }
 }
 
-extern "C" void App_TaskStep(void)
+extern "C" void App_ControlStep(void)
 {
     run_control_loop();
+
+    if (g_chassis == nullptr)
+    {
+        return;
+    }
+
+    static uint32_t last_print = 0u;
+    const uint32_t now = HAL_GetTick();
+    if ((now - last_print) >= 500u)
+    {
+        last_print = now;
+
+        const CmdData &c = g_cmd_port->cmd;
+        const M3508::State &ls = g_chassis->left_motor()->get_state();
+        const M3508::State &rs = g_chassis->right_motor()->get_state();
+
+        g_debug.printf("[ctrl] v=%.2f w=%.2f l=%d r=%d m=%d | L:%.0frpm %d | R:%.0frpm %d\n",
+                       c.linear_speed, c.angular_speed,
+                       c.left_seeder, c.right_seeder, c.mowing,
+                       ls.output_rpm, ls.command,
+                       rs.output_rpm, rs.command);
+    }
 }
 
-// ==================== Test Mode ====================
+// ==================== Test Injection ====================
 
-static bool g_test_active = false;
+#if APP_TEST_MODE
+
 static uint32_t g_test_start_tick = 0u;
 
-extern "C" void App_TestInit(void)
+extern "C" void App_TestInjectStep(void)
 {
-    App_Init();
-    g_test_active = true;
-    g_test_start_tick = HAL_GetTick();
-    g_debug.printf("[test] start. phases:\n");
-    g_debug.printf("  0-3s: stop\n");
-    g_debug.printf("  3-6s: forward v=0.20\n");
-    g_debug.printf("  6-9s: backward v=-0.20\n");
-    g_debug.printf("  9-12s: turn_left w=1.0\n");
-    g_debug.printf("  12-15s: turn_right w=-1.0\n");
-    g_debug.printf("  15-19s: forward + seeder ON\n");
-    g_debug.printf("  19-22s: stop + seeder OFF\n");
-}
-
-extern "C" void App_TestStep(void)
-{
-    if (!g_test_active || g_cmd_port == nullptr)
+    if (g_cmd_port == nullptr)
     {
         return;
     }
 
     const uint32_t now = HAL_GetTick();
+
+    if (g_test_start_tick == 0u)
+    {
+        g_test_start_tick = now;
+        g_debug.printf("[test] start. phases:\n");
+        g_debug.printf("  stop -> forward -> backward -> turn_left -> turn_right -> fwd+seeder -> stop\n");
+    }
+
     const uint32_t elapsed = now - g_test_start_tick;
 
     float v = 0.0f;
     float w = 0.0f;
     bool seeder = false;
-    const char *phase = "stop";
 
     if (elapsed < 3000u)
     {
-        phase = "stop";
+        // stop
     }
     else if (elapsed < 6000u)
     {
         v = 0.20f;
-        phase = "forward";
     }
-    else if (elapsed < 8000u)
+    else if (elapsed < 9000u)
     {
         v = -0.20f;
-        phase = "backward";
-    }
-    else if (elapsed < 10000u)
-    {
-        w = 1.00f;
-        phase = "turn_left";
     }
     else if (elapsed < 12000u)
     {
-        w = -1.00f;
-        phase = "turn_right";
+        w = 1.00f;
     }
-    else if (elapsed < 14000u)
+    else if (elapsed < 15000u)
     {
+        w = -1.00f;
+    }
+    else if (elapsed < 19000u)
+    {
+        v = 0.20f;
         seeder = true;
-        phase = "fwd+seeder";
     }
     else if (elapsed < 22000u)
     {
-        phase = "stop+seeder_off";
+        // stop + seeder off
     }
     else
     {
@@ -211,20 +310,16 @@ extern "C" void App_TestStep(void)
     g_cmd_port->cmd.linear_speed = v;
     g_cmd_port->cmd.angular_speed = w;
     g_cmd_port->cmd.left_seeder = seeder;
-
-    run_control_loop();
-
-    static uint32_t last_print = 0u;
-    if ((now - last_print) >= 500u)
-    {
-        last_print = now;
-
-        const M3508::State &ls = g_chassis->left_motor()->get_state();
-        const M3508::State &rs = g_chassis->right_motor()->get_state();
-
-        g_debug.printf("[%s] v=%.2f w=%.2f seed=%d | L:%.0f rpm %d | R:%.0f rpm %d\n",
-                       phase, v, w, seeder,
-                       ls.output_rpm, ls.command,
-                       rs.output_rpm, rs.command);
-    }
+    g_cmd_port->cmd.right_seeder = seeder;
+    g_cmd_port->cmd.mowing = seeder;
 }
+
+#else  // !APP_TEST_MODE
+
+extern "C" void App_TestInjectStep(void)
+{
+    // UART ISR writes to g_cmd_port->cmd directly.
+    // This function is a no-op in real mode.
+}
+
+#endif

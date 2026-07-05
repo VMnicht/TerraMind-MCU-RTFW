@@ -86,11 +86,12 @@ void cmd_port::handleReceiveData(uint8_t byte)
     case WAIT_END_1:
         if (byte == CMD_FRAME_END_1)
         {
-            const uint16_t calc_crc = CRC16_Table(rx_buf_, data_length_);
-            if (calc_crc == crc_.crc_code)
-            {
-                parse_data(rx_buf_, data_length_);
-            }
+//            const uint16_t calc_crc = CRC16_Table(rx_buf_, data_length_);
+//            if (calc_crc == crc_.crc_code)
+//            {
+//                
+//            }
+					parse_data(rx_buf_, data_length_);
         }
         state_ = WAIT_HEAD_0;
         break;
