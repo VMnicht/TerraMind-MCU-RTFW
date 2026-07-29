@@ -162,7 +162,19 @@ targets:
         - .cmsis/include
         - RTE/_mainboard
       libList: []
-    excludeList: []
+    excludeList:
+      - ../mainboard_FW/Algorithm/SuperPID.cpp
+      - ../mainboard_FW/BSP/can_bsp.cpp
+      - ../mainboard_FW/BSP/pwm_esc_bsp.cpp
+      - ../mainboard_FW/BSP/pwm_servo_bsp.cpp
+      - ../mainboard_FW/Device/diff_chassis.cpp
+      - ../mainboard_FW/Driver/M3508.cpp
+      - ../mainboard_FW/Driver/debug_printer.cpp
+      - ../mainboard_FW/Driver/pwm_esc.cpp
+      - ../mainboard_FW/Driver/pwm_servo.cpp
+      - ../mainboard_FW/Driver/xbox.cpp
+      - ../mainboard_FW/OSAL/TaskManager.cpp
+      - ../mainboard_FW/Utils/Vector2D.cpp
     settings:
       debugger: cortex-debug
     toolchain: AC6

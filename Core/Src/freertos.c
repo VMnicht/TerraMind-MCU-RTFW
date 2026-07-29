@@ -59,7 +59,6 @@ const osThreadAttr_t defaultTask_attributes = {
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-void StartInjectTask(void *argument);
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
@@ -97,16 +96,6 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
-#if APP_TEST_MODE
-  {
-    const osThreadAttr_t injectTask_attributes = {
-      .name = "injectTask",
-      .stack_size = 128 * 2,
-      .priority = osPriorityLow,
-    };
-    osThreadNew(StartInjectTask, NULL, &injectTask_attributes);
-  }
-#endif
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -138,14 +127,5 @@ void StartDefaultTask(void *argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
-void StartInjectTask(void *argument)
-{
-  (void)argument;
-  for(;;)
-  {
-    App_TestInjectStep();
-    osDelay(50);
-  }
-}
 /* USER CODE END Application */
 

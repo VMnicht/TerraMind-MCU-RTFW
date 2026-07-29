@@ -624,66 +624,14 @@
               <FileType>5</FileType>
               <FilePath>..\mainboard_FW\Algorithm\PID.h</FilePath>
             </File>
-            <File>
-              <FileName>SuperPID.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\mainboard_FW\Algorithm\SuperPID.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>SuperPID.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\mainboard_FW\Algorithm\SuperPID.h</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>Device</GroupName>
-          <Files>
-            <File>
-              <FileName>diff_chassis.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\mainboard_FW\Device\diff_chassis.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>diff_chassis.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\mainboard_FW\Device\diff_chassis.h</FilePath>
-            </File>
-          </Files>
         </Group>
         <Group>
           <GroupName>Driver</GroupName>
           <Files>
-            <File>
-              <FileName>M3508.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\mainboard_FW\Driver\M3508.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>M3508.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\mainboard_FW\Driver\M3508.h</FilePath>
-            </File>
-            <File>
-              <FileName>xbox.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\mainboard_FW\Driver\xbox.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>xbox.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\mainboard_FW\Driver\xbox.h</FilePath>
-            </File>
-            <File>
-              <FileName>debug_printer.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\mainboard_FW\Driver\debug_printer.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>debug_printer.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\mainboard_FW\Driver\debug_printer.h</FilePath>
-            </File>
             <File>
               <FileName>pwm_motor.cpp</FileName>
               <FileType>8</FileType>
@@ -693,26 +641,6 @@
               <FileName>pwm_motor.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\mainboard_FW\Driver\pwm_motor.h</FilePath>
-            </File>
-            <File>
-              <FileName>pwm_servo.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\mainboard_FW\Driver\pwm_servo.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>pwm_servo.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\mainboard_FW\Driver\pwm_servo.h</FilePath>
-            </File>
-            <File>
-              <FileName>pwm_esc.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\mainboard_FW\Driver\pwm_esc.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>pwm_esc.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\mainboard_FW\Driver\pwm_esc.h</FilePath>
             </File>
             <File>
               <FileName>cmd_port.cpp</FileName>
@@ -740,16 +668,6 @@
               <FilePath>..\mainboard_FW\BSP\Serial_device.h</FilePath>
             </File>
             <File>
-              <FileName>can_bsp.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\mainboard_FW\BSP\can_bsp.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>can_bsp.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\mainboard_FW\BSP\can_bsp.h</FilePath>
-            </File>
-            <File>
               <FileName>pwm_enc_bsp.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\mainboard_FW\BSP\pwm_enc_bsp.cpp</FilePath>
@@ -759,42 +677,10 @@
               <FileType>5</FileType>
               <FilePath>..\mainboard_FW\BSP\pwm_enc_bsp.h</FilePath>
             </File>
-            <File>
-              <FileName>pwm_servo_bsp.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\mainboard_FW\BSP\pwm_servo_bsp.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>pwm_servo_bsp.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\mainboard_FW\BSP\pwm_servo_bsp.h</FilePath>
-            </File>
-            <File>
-              <FileName>pwm_esc_bsp.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\mainboard_FW\BSP\pwm_esc_bsp.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>pwm_esc_bsp.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\mainboard_FW\BSP\pwm_esc_bsp.h</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>OSAL</GroupName>
-          <Files>
-            <File>
-              <FileName>TaskManager.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\mainboard_FW\OSAL\TaskManager.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>TaskManager.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\mainboard_FW\OSAL\TaskManager.h</FilePath>
-            </File>
-          </Files>
         </Group>
         <Group>
           <GroupName>Config</GroupName>
@@ -811,16 +697,6 @@
               <FileName>crc_util.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\mainboard_FW\Utils\crc_util.h</FilePath>
-            </File>
-            <File>
-              <FileName>Vector2D.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\mainboard_FW\Utils\Vector2D.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>Vector2D.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\mainboard_FW\Utils\Vector2D.h</FilePath>
             </File>
           </Files>
         </Group>

@@ -22,10 +22,8 @@
                 "c:\\Users\\Tang\\Desktop\\CUEDC\\mainboard\\Middlewares\\Third_Party\\FreeRTOS\\Source\\portable\\MemMang",
                 "c:\\Users\\Tang\\Desktop\\CUEDC\\mainboard\\mainboard_FW\\App",
                 "c:\\Users\\Tang\\Desktop\\CUEDC\\mainboard\\mainboard_FW\\Algorithm",
-                "c:\\Users\\Tang\\Desktop\\CUEDC\\mainboard\\mainboard_FW\\Device",
                 "c:\\Users\\Tang\\Desktop\\CUEDC\\mainboard\\mainboard_FW\\Driver",
                 "c:\\Users\\Tang\\Desktop\\CUEDC\\mainboard\\mainboard_FW\\BSP",
-                "c:\\Users\\Tang\\Desktop\\CUEDC\\mainboard\\mainboard_FW\\OSAL",
                 "c:\\Users\\Tang\\Desktop\\CUEDC\\mainboard\\mainboard_FW\\Utils"
             ],
             "defines": [
