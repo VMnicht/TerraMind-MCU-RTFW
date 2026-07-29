@@ -1,4 +1,4 @@
-# Servo A Incremental Test Design
+﻿# Servo A Incremental Test Design
 
 ## Background
 
@@ -21,8 +21,8 @@ existing motor test, and only verify servo port A.
 
 Files to modify:
 
-- `TerraMind_FW/App/test.h`
-- `TerraMind_FW/App/test.cpp`
+- `mainboard_FW/App/test.h`
+- `mainboard_FW/App/test.cpp`
 - `Core/Src/freertos.c`
 
 No changes are needed in:

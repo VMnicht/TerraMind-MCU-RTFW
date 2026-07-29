@@ -1,8 +1,8 @@
-# TerraMind CmdPort 通信协议手册 v2.0
+﻿# mainboard CmdPort 通信协议手册 v2.0
 
 ## 一、概述
 
-CmdPort 是 TerraMind 主控板与上位机之间的 UART 串行通信协议，用于下发：
+CmdPort 是 mainboard 主控板与上位机之间的 UART 串行通信协议，用于下发：
 
 - 底盘差速运动速度指令（线速度 + 角速度）
 - 双路播撒器开关控制（左 / 右）

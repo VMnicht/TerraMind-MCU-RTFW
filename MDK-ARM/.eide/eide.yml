@@ -1,5 +1,5 @@
 version: "4.1"
-name: TerraMind
+name: mainboard
 type: ARM
 deviceName: null
 packDir: null
@@ -75,65 +75,65 @@ virtualFolder:
           folders: []
     - name: App
       files:
-        - path: ../TerraMind_FW/App/test.cpp
-        - path: ../TerraMind_FW/App/test.h
-        - path: ../TerraMind_FW/App/app_main.cpp
-        - path: ../TerraMind_FW/App/app_main.h
+        - path: ../mainboard_FW/App/app_main.cpp
+        - path: ../mainboard_FW/App/app_main.h
       folders: []
     - name: Algorithm
       files:
-        - path: ../TerraMind_FW/Algorithm/PID.cpp
-        - path: ../TerraMind_FW/Algorithm/PID.h
-        - path: ../TerraMind_FW/Algorithm/SuperPID.cpp
-        - path: ../TerraMind_FW/Algorithm/SuperPID.h
+        - path: ../mainboard_FW/Algorithm/PID.cpp
+        - path: ../mainboard_FW/Algorithm/PID.h
+        - path: ../mainboard_FW/Algorithm/SuperPID.cpp
+        - path: ../mainboard_FW/Algorithm/SuperPID.h
       folders: []
     - name: Device
       files:
-        - path: ../TerraMind_FW/Device/diff_chassis.cpp
-        - path: ../TerraMind_FW/Device/diff_chassis.h
+        - path: ../mainboard_FW/Device/diff_chassis.cpp
+        - path: ../mainboard_FW/Device/diff_chassis.h
       folders: []
     - name: Driver
       files:
-        - path: ../TerraMind_FW/Driver/M3508.cpp
-        - path: ../TerraMind_FW/Driver/M3508.h
-        - path: ../TerraMind_FW/Driver/xbox.cpp
-        - path: ../TerraMind_FW/Driver/xbox.h
-        - path: ../TerraMind_FW/Driver/debug_printer.cpp
-        - path: ../TerraMind_FW/Driver/debug_printer.h
-        - path: ../TerraMind_FW/Driver/pwm_motor.cpp
-        - path: ../TerraMind_FW/Driver/pwm_motor.h
-        - path: ../TerraMind_FW/Driver/pwm_servo.cpp
-        - path: ../TerraMind_FW/Driver/pwm_servo.h
-        - path: ../TerraMind_FW/Driver/pwm_esc.cpp
-        - path: ../TerraMind_FW/Driver/pwm_esc.h
-        - path: ../TerraMind_FW/Driver/cmd_port.cpp
-        - path: ../TerraMind_FW/Driver/cmd_port.h
+        - path: ../mainboard_FW/Driver/M3508.cpp
+        - path: ../mainboard_FW/Driver/M3508.h
+        - path: ../mainboard_FW/Driver/xbox.cpp
+        - path: ../mainboard_FW/Driver/xbox.h
+        - path: ../mainboard_FW/Driver/debug_printer.cpp
+        - path: ../mainboard_FW/Driver/debug_printer.h
+        - path: ../mainboard_FW/Driver/pwm_motor.cpp
+        - path: ../mainboard_FW/Driver/pwm_motor.h
+        - path: ../mainboard_FW/Driver/pwm_servo.cpp
+        - path: ../mainboard_FW/Driver/pwm_servo.h
+        - path: ../mainboard_FW/Driver/pwm_esc.cpp
+        - path: ../mainboard_FW/Driver/pwm_esc.h
+        - path: ../mainboard_FW/Driver/cmd_port.cpp
+        - path: ../mainboard_FW/Driver/cmd_port.h
       folders: []
     - name: BSP
       files:
-        - path: ../TerraMind_FW/BSP/Serial_device.cpp
-        - path: ../TerraMind_FW/BSP/Serial_device.h
-        - path: ../TerraMind_FW/BSP/can_bsp.cpp
-        - path: ../TerraMind_FW/BSP/can_bsp.h
-        - path: ../TerraMind_FW/BSP/pwm_enc_bsp.cpp
-        - path: ../TerraMind_FW/BSP/pwm_enc_bsp.h
-        - path: ../TerraMind_FW/BSP/pwm_servo_bsp.cpp
-        - path: ../TerraMind_FW/BSP/pwm_servo_bsp.h
+        - path: ../mainboard_FW/BSP/Serial_device.cpp
+        - path: ../mainboard_FW/BSP/Serial_device.h
+        - path: ../mainboard_FW/BSP/can_bsp.cpp
+        - path: ../mainboard_FW/BSP/can_bsp.h
+        - path: ../mainboard_FW/BSP/pwm_enc_bsp.cpp
+        - path: ../mainboard_FW/BSP/pwm_enc_bsp.h
+        - path: ../mainboard_FW/BSP/pwm_servo_bsp.cpp
+        - path: ../mainboard_FW/BSP/pwm_servo_bsp.h
+        - path: ../mainboard_FW/BSP/pwm_esc_bsp.cpp
+        - path: ../mainboard_FW/BSP/pwm_esc_bsp.h
       folders: []
     - name: OSAL
       files:
-        - path: ../TerraMind_FW/OSAL/TaskManager.cpp
-        - path: ../TerraMind_FW/OSAL/TaskManager.h
+        - path: ../mainboard_FW/OSAL/TaskManager.cpp
+        - path: ../mainboard_FW/OSAL/TaskManager.h
       folders: []
     - name: Config
       files: []
       folders: []
     - name: Utils
       files:
-        - path: ../TerraMind_FW/Utils/crc_util.c
-        - path: ../TerraMind_FW/Utils/crc_util.h
-        - path: ../TerraMind_FW/Utils/Vector2D.cpp
-        - path: ../TerraMind_FW/Utils/Vector2D.h
+        - path: ../mainboard_FW/Utils/crc_util.c
+        - path: ../mainboard_FW/Utils/crc_util.h
+        - path: ../mainboard_FW/Utils/Vector2D.cpp
+        - path: ../mainboard_FW/Utils/Vector2D.h
       folders: []
     - name: ::CMSIS
       files: []
@@ -143,7 +143,7 @@ outDir: build
 miscInfo:
   uid: b1cc6df5ac0ce5a06745272c42028c68
 targets:
-  TerraMind:
+  mainboard:
     cppPreprocessAttrs:
       defineList:
         - USE_HAL_DRIVER
@@ -160,7 +160,7 @@ targets:
         - ../Drivers/CMSIS/Device/ST/STM32F4xx/Include
         - ../Drivers/CMSIS/Include
         - .cmsis/include
-        - RTE/_TerraMind
+        - RTE/_mainboard
       libList: []
     excludeList: []
     settings:

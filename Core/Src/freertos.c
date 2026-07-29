@@ -1,4 +1,4 @@
-/* USER CODE BEGIN Header */
+﻿/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * File Name          : freertos.c
@@ -26,7 +26,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "can.h"
-#include "../../TerraMind_FW/App/app_main.h"
+#include "../../mainboard_FW/App/app_main.h"
 
 /* USER CODE END Includes */
 

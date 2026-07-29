@@ -1,10 +1,10 @@
-# PWM Servo Driver Implementation Plan
+﻿# PWM Servo Driver Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 为 TerraMind 当前工程新增与现有 `pwm_motor` 风格一致的 PWM 舵机驱动，支持 A/B/C/D 固定口位与参考工程一致的角度映射。
+**Goal:** 为 mainboard 当前工程新增与现有 `pwm_motor` 风格一致的 PWM 舵机驱动，支持 A/B/C/D 固定口位与参考工程一致的角度映射。
 
-**Architecture:** 新增 `PwmServoBsp` 负责定时器和通道映射、PWM 启动与 compare 输出；新增 `PwmServo` 负责角度限幅、参考公式换算与回中。工程文件 `MDK-ARM/TerraMind.uvprojx` 同步加入新文件，最后用诊断检查和最小编译验证保证接入正确。
+**Architecture:** 新增 `PwmServoBsp` 负责定时器和通道映射、PWM 启动与 compare 输出；新增 `PwmServo` 负责角度限幅、参考公式换算与回中。工程文件 `MDK-ARM/mainboard.uvprojx` 同步加入新文件，最后用诊断检查和最小编译验证保证接入正确。
 
 **Tech Stack:** C++、STM32 HAL TIM、Keil uVision `.uvprojx`、Trae diagnostics
 
@@ -13,10 +13,10 @@
 ### Task 1: 实现舵机 BSP 层
 
 **Files:**
-- Create: `c:\Users\Tang\Desktop\TerraMind\TerraMind\TerraMind\TerraMind_FW\BSP\pwm_servo_bsp.h`
-- Create: `c:\Users\Tang\Desktop\TerraMind\TerraMind\TerraMind\TerraMind_FW\BSP\pwm_servo_bsp.cpp`
-- Reference: `c:\Users\Tang\Desktop\TerraMind\TerraMind\TerraMind\TerraMind_FW\BSP\pwm_enc_bsp.h`
-- Reference: `c:\Users\Tang\Desktop\TerraMind\TerraMind\TerraMind\TerraMind_FW\BSP\pwm_enc_bsp.cpp`
+- Create: `c:\Users\Tang\Desktop\mainboard\mainboard\mainboard\mainboard_FW\BSP\pwm_servo_bsp.h`
+- Create: `c:\Users\Tang\Desktop\mainboard\mainboard\mainboard\mainboard_FW\BSP\pwm_servo_bsp.cpp`
+- Reference: `c:\Users\Tang\Desktop\mainboard\mainboard\mainboard\mainboard_FW\BSP\pwm_enc_bsp.h`
+- Reference: `c:\Users\Tang\Desktop\mainboard\mainboard\mainboard\mainboard_FW\BSP\pwm_enc_bsp.cpp`
 
 - [ ] **Step 1: 写出 BSP 头文件骨架**
 
@@ -166,25 +166,25 @@ uint32_t PwmServoBsp::clamp_compare_value(uint32_t compare_value) const
 - [ ] **Step 4: 运行诊断检查 BSP 新文件**
 
 Run: 使用 `GetDiagnostics` 检查
-- `c:\Users\Tang\Desktop\TerraMind\TerraMind\TerraMind\TerraMind_FW\BSP\pwm_servo_bsp.h`
-- `c:\Users\Tang\Desktop\TerraMind\TerraMind\TerraMind\TerraMind_FW\BSP\pwm_servo_bsp.cpp`
+- `c:\Users\Tang\Desktop\mainboard\mainboard\mainboard\mainboard_FW\BSP\pwm_servo_bsp.h`
+- `c:\Users\Tang\Desktop\mainboard\mainboard\mainboard\mainboard_FW\BSP\pwm_servo_bsp.cpp`
 
 Expected: 无新增语法或包含错误
 
 - [ ] **Step 5: 提交本任务**
 
 ```bash
-git add TerraMind_FW/BSP/pwm_servo_bsp.h TerraMind_FW/BSP/pwm_servo_bsp.cpp
+git add mainboard_FW/BSP/pwm_servo_bsp.h mainboard_FW/BSP/pwm_servo_bsp.cpp
 git commit -m "feat: add pwm servo bsp"
 ```
 
 ### Task 2: 实现舵机 Driver 层
 
 **Files:**
-- Create: `c:\Users\Tang\Desktop\TerraMind\TerraMind\TerraMind\TerraMind_FW\Driver\pwm_servo.h`
-- Create: `c:\Users\Tang\Desktop\TerraMind\TerraMind\TerraMind\TerraMind_FW\Driver\pwm_servo.cpp`
-- Reference: `c:\Users\Tang\Desktop\TerraMind\TerraMind\TerraMind\TerraMind_FW\Driver\pwm_motor.h`
-- Reference: `c:\Users\Tang\Desktop\TerraMind\TerraMind\TerraMind\TerraMind_FW\Driver\pwm_motor.cpp`
+- Create: `c:\Users\Tang\Desktop\mainboard\mainboard\mainboard\mainboard_FW\Driver\pwm_servo.h`
+- Create: `c:\Users\Tang\Desktop\mainboard\mainboard\mainboard\mainboard_FW\Driver\pwm_servo.cpp`
+- Reference: `c:\Users\Tang\Desktop\mainboard\mainboard\mainboard\mainboard_FW\Driver\pwm_motor.h`
+- Reference: `c:\Users\Tang\Desktop\mainboard\mainboard\mainboard\mainboard_FW\Driver\pwm_motor.cpp`
 
 - [ ] **Step 1: 写出 Driver 头文件接口**
 
@@ -350,39 +350,39 @@ bool PwmServo::hardware_config_is_valid() const
 - [ ] **Step 5: 运行诊断检查 Driver 新文件**
 
 Run: 使用 `GetDiagnostics` 检查
-- `c:\Users\Tang\Desktop\TerraMind\TerraMind\TerraMind\TerraMind_FW\Driver\pwm_servo.h`
-- `c:\Users\Tang\Desktop\TerraMind\TerraMind\TerraMind\TerraMind_FW\Driver\pwm_servo.cpp`
+- `c:\Users\Tang\Desktop\mainboard\mainboard\mainboard\mainboard_FW\Driver\pwm_servo.h`
+- `c:\Users\Tang\Desktop\mainboard\mainboard\mainboard\mainboard_FW\Driver\pwm_servo.cpp`
 
 Expected: 无新增语法或包含错误
 
 - [ ] **Step 6: 提交本任务**
 
 ```bash
-git add TerraMind_FW/Driver/pwm_servo.h TerraMind_FW/Driver/pwm_servo.cpp
+git add mainboard_FW/Driver/pwm_servo.h mainboard_FW/Driver/pwm_servo.cpp
 git commit -m "feat: add pwm servo driver"
 ```
 
 ### Task 3: 接入 Keil 工程并完成最小验证
 
 **Files:**
-- Modify: `c:\Users\Tang\Desktop\TerraMind\TerraMind\TerraMind\MDK-ARM\TerraMind.uvprojx`
-- Verify: `c:\Users\Tang\Desktop\TerraMind\TerraMind\TerraMind\TerraMind_FW\BSP\pwm_servo_bsp.h`
-- Verify: `c:\Users\Tang\Desktop\TerraMind\TerraMind\TerraMind\TerraMind_FW\BSP\pwm_servo_bsp.cpp`
-- Verify: `c:\Users\Tang\Desktop\TerraMind\TerraMind\TerraMind\TerraMind_FW\Driver\pwm_servo.h`
-- Verify: `c:\Users\Tang\Desktop\TerraMind\TerraMind\TerraMind\TerraMind_FW\Driver\pwm_servo.cpp`
+- Modify: `c:\Users\Tang\Desktop\mainboard\mainboard\mainboard\MDK-ARM\mainboard.uvprojx`
+- Verify: `c:\Users\Tang\Desktop\mainboard\mainboard\mainboard\mainboard_FW\BSP\pwm_servo_bsp.h`
+- Verify: `c:\Users\Tang\Desktop\mainboard\mainboard\mainboard\mainboard_FW\BSP\pwm_servo_bsp.cpp`
+- Verify: `c:\Users\Tang\Desktop\mainboard\mainboard\mainboard\mainboard_FW\Driver\pwm_servo.h`
+- Verify: `c:\Users\Tang\Desktop\mainboard\mainboard\mainboard\mainboard_FW\Driver\pwm_servo.cpp`
 
-- [ ] **Step 1: 将新文件加入 `TerraMind.uvprojx`**
+- [ ] **Step 1: 将新文件加入 `mainboard.uvprojx`**
 
 ```xml
 <File>
   <FileName>pwm_servo.cpp</FileName>
   <FileType>8</FileType>
-  <FilePath>..\TerraMind_FW\Driver\pwm_servo.cpp</FilePath>
+  <FilePath>..\mainboard_FW\Driver\pwm_servo.cpp</FilePath>
 </File>
 <File>
   <FileName>pwm_servo.h</FileName>
   <FileType>5</FileType>
-  <FilePath>..\TerraMind_FW\Driver\pwm_servo.h</FilePath>
+  <FilePath>..\mainboard_FW\Driver\pwm_servo.h</FilePath>
 </File>
 ```
 
@@ -390,23 +390,23 @@ git commit -m "feat: add pwm servo driver"
 <File>
   <FileName>pwm_servo_bsp.cpp</FileName>
   <FileType>8</FileType>
-  <FilePath>..\TerraMind_FW\BSP\pwm_servo_bsp.cpp</FilePath>
+  <FilePath>..\mainboard_FW\BSP\pwm_servo_bsp.cpp</FilePath>
 </File>
 <File>
   <FileName>pwm_servo_bsp.h</FileName>
   <FileType>5</FileType>
-  <FilePath>..\TerraMind_FW\BSP\pwm_servo_bsp.h</FilePath>
+  <FilePath>..\mainboard_FW\BSP\pwm_servo_bsp.h</FilePath>
 </File>
 ```
 
 - [ ] **Step 2: 运行全量诊断**
 
 Run: 使用 `GetDiagnostics` 检查以下文件
-- `c:\Users\Tang\Desktop\TerraMind\TerraMind\TerraMind\MDK-ARM\TerraMind.uvprojx`
-- `c:\Users\Tang\Desktop\TerraMind\TerraMind\TerraMind\TerraMind_FW\BSP\pwm_servo_bsp.h`
-- `c:\Users\Tang\Desktop\TerraMind\TerraMind\TerraMind\TerraMind_FW\BSP\pwm_servo_bsp.cpp`
-- `c:\Users\Tang\Desktop\TerraMind\TerraMind\TerraMind\TerraMind_FW\Driver\pwm_servo.h`
-- `c:\Users\Tang\Desktop\TerraMind\TerraMind\TerraMind\TerraMind_FW\Driver\pwm_servo.cpp`
+- `c:\Users\Tang\Desktop\mainboard\mainboard\mainboard\MDK-ARM\mainboard.uvprojx`
+- `c:\Users\Tang\Desktop\mainboard\mainboard\mainboard\mainboard_FW\BSP\pwm_servo_bsp.h`
+- `c:\Users\Tang\Desktop\mainboard\mainboard\mainboard\mainboard_FW\BSP\pwm_servo_bsp.cpp`
+- `c:\Users\Tang\Desktop\mainboard\mainboard\mainboard\mainboard_FW\Driver\pwm_servo.h`
+- `c:\Users\Tang\Desktop\mainboard\mainboard\mainboard\mainboard_FW\Driver\pwm_servo.cpp`
 
 Expected: 无新增错误；如果 `uvprojx` 无语言诊断，则其余 C++ 文件应无报错
 
@@ -420,12 +420,12 @@ git status --short
 
 Expected:
 - 新增 4 个舵机文件
-- 修改 `MDK-ARM/TerraMind.uvprojx`
+- 修改 `MDK-ARM/mainboard.uvprojx`
 - 保留与本任务无关的现有日志文件变更，不做回退
 
 - [ ] **Step 4: 提交本任务**
 
 ```bash
-git add MDK-ARM/TerraMind.uvprojx TerraMind_FW/BSP/pwm_servo_bsp.h TerraMind_FW/BSP/pwm_servo_bsp.cpp TerraMind_FW/Driver/pwm_servo.h TerraMind_FW/Driver/pwm_servo.cpp
+git add MDK-ARM/mainboard.uvprojx mainboard_FW/BSP/pwm_servo_bsp.h mainboard_FW/BSP/pwm_servo_bsp.cpp mainboard_FW/Driver/pwm_servo.h mainboard_FW/Driver/pwm_servo.cpp
 git commit -m "feat: add pwm servo driver to keil project"
 ```

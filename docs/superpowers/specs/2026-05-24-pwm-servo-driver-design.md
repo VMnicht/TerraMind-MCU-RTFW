@@ -1,8 +1,8 @@
-# PWM Servo Driver Design
+﻿# PWM Servo Driver Design
 
 ## Background
 
-This project needs a PWM servo driver for the current TerraMind firmware.
+This project needs a PWM servo driver for the current mainboard firmware.
 The user provided an existing reference implementation in another project:
 `GC_Race/USER/Application/servo.h` and `servo.cpp`.
 
@@ -42,12 +42,12 @@ The implementation uses the same high-level style as `pwm_motor`:
 
 Planned files:
 
-- `TerraMind_FW/BSP/pwm_servo_bsp.h`
-- `TerraMind_FW/BSP/pwm_servo_bsp.cpp`
-- `TerraMind_FW/Driver/pwm_servo.h`
-- `TerraMind_FW/Driver/pwm_servo.cpp`
+- `mainboard_FW/BSP/pwm_servo_bsp.h`
+- `mainboard_FW/BSP/pwm_servo_bsp.cpp`
+- `mainboard_FW/Driver/pwm_servo.h`
+- `mainboard_FW/Driver/pwm_servo.cpp`
 
-The new files will also be added into `MDK-ARM/TerraMind.uvprojx`.
+The new files will also be added into `MDK-ARM/mainboard.uvprojx`.
 
 ## BSP Design
 
@@ -159,8 +159,8 @@ from a predictable neutral position.
 
 ## Integration Plan
 
-- Add the new BSP and Driver files under `TerraMind_FW`.
-- Update `MDK-ARM/TerraMind.uvprojx` to include the files in the existing `BSP` and `Driver` groups.
+- Add the new BSP and Driver files under `mainboard_FW`.
+- Update `MDK-ARM/mainboard.uvprojx` to include the files in the existing `BSP` and `Driver` groups.
 - Keep all existing modules unchanged unless a build issue requires a minimal include adjustment.
 
 ## Verification Plan

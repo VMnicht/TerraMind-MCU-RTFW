@@ -1,4 +1,4 @@
-#MicroXplorer Configuration settings - do not modify
+﻿#MicroXplorer Configuration settings - do not modify
 CAD.formats=
 CAD.pinconfig=
 CAD.provider=
@@ -240,8 +240,8 @@ ProjectManager.MainLocation=Core/Src
 ProjectManager.NoMain=false
 ProjectManager.PreviousToolchain=
 ProjectManager.ProjectBuild=false
-ProjectManager.ProjectFileName=TerraMind.ioc
-ProjectManager.ProjectName=TerraMind
+ProjectManager.ProjectFileName=mainboard.ioc
+ProjectManager.ProjectName=mainboard
 ProjectManager.ProjectStructure=
 ProjectManager.RegisterCallBack=
 ProjectManager.StackSize=0x400

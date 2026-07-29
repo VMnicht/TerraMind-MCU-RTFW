@@ -1,10 +1,10 @@
-
+﻿
 /*
  * Auto generated Run-Time-Environment Configuration File
  *      *** Do not modify ! ***
  *
- * Project: 'TerraMind' 
- * Target:  'TerraMind' 
+ * Project: 'mainboard' 
+ * Target:  'mainboard' 
  */
 
 #ifndef RTE_COMPONENTS_H

@@ -1,4 +1,4 @@
-# Servo A Incremental Test Implementation Plan
+﻿# Servo A Incremental Test Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -13,7 +13,7 @@
 ### Task 1: 扩展测试接口声明
 
 **Files:**
-- Modify: `c:\Users\Tang\Desktop\TerraMind\TerraMind\TerraMind\TerraMind_FW\App\test.h`
+- Modify: `c:\Users\Tang\Desktop\mainboard\mainboard\mainboard\mainboard_FW\App\test.h`
 
 - [ ] **Step 1: 写出会失败的接口引用目标**
 
@@ -46,7 +46,7 @@ Expected: 无新增错误
 ### Task 2: 在测试实现中增加舵机 A 状态机
 
 **Files:**
-- Modify: `c:\Users\Tang\Desktop\TerraMind\TerraMind\TerraMind\TerraMind_FW\App\test.cpp`
+- Modify: `c:\Users\Tang\Desktop\mainboard\mainboard\mainboard\mainboard_FW\App\test.cpp`
 
 - [ ] **Step 1: 写出会失败的新增依赖引用**
 
@@ -182,7 +182,7 @@ Expected: 无新增错误
 ### Task 3: 把舵机 A 测试挂到任务循环
 
 **Files:**
-- Modify: `c:\Users\Tang\Desktop\TerraMind\TerraMind\TerraMind\Core\Src\freertos.c`
+- Modify: `c:\Users\Tang\Desktop\mainboard\mainboard\mainboard\Core\Src\freertos.c`
 
 - [ ] **Step 1: 写出会失败的新调用目标**
 
@@ -221,7 +221,7 @@ git status --short
 ```
 
 Expected:
-- 修改 `TerraMind_FW/App/test.h`
-- 修改 `TerraMind_FW/App/test.cpp`
+- 修改 `mainboard_FW/App/test.h`
+- 修改 `mainboard_FW/App/test.cpp`
 - 修改 `Core/Src/freertos.c`
 - 保留已有舵机驱动文件和文档变更
