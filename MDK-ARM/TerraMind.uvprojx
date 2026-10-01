@@ -695,6 +695,16 @@
               <FilePath>..\TerraMind_FW\Driver\pwm_motor.h</FilePath>
             </File>
             <File>
+              <FileName>pwm_open_loop_motor.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\TerraMind_FW\Driver\pwm_open_loop_motor.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>pwm_open_loop_motor.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\TerraMind_FW\Driver\pwm_open_loop_motor.h</FilePath>
+            </File>
+            <File>
               <FileName>pwm_servo.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\TerraMind_FW\Driver\pwm_servo.cpp</FilePath>
@@ -723,6 +733,26 @@
               <FileName>cmd_port.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\TerraMind_FW\Driver\cmd_port.h</FilePath>
+            </File>
+            <File>
+              <FileName>pc_protocol.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\TerraMind_FW\Driver\pc_protocol.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>pc_protocol.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\TerraMind_FW\Driver\pc_protocol.h</FilePath>
+            </File>
+            <File>
+              <FileName>pc_port.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\TerraMind_FW\Driver\pc_port.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>pc_port.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\TerraMind_FW\Driver\pc_port.h</FilePath>
             </File>
           </Files>
         </Group>

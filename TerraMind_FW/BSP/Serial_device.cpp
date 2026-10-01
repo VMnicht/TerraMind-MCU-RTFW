@@ -4,12 +4,13 @@ SerialDevice* SerialDevice::instances_[MAX_INSTANCES]={nullptr};
 int SerialDevice::instanceCount_=0;    
 SerialDevice::SerialDevice(UART_HandleTypeDef *huartx)                   
 {
-    if(instanceCount_>MAX_INSTANCES)
+    huart_ = huartx;
+    if(huartx == nullptr || instanceCount_ >= MAX_INSTANCES)
     {
         init_status = false;
         return;
     }
-    for(uint8_t i = 0; i < MAX_INSTANCES; i++)
+    for(int i = 0; i < instanceCount_; i++)
     {
         if(instances_[i]->huart_ == huartx)
         {
@@ -17,7 +18,6 @@ SerialDevice::SerialDevice(UART_HandleTypeDef *huartx)
             return;
         }
     }
-    huart_ = huartx;
     instances_[instanceCount_] = this;
     instanceCount_++;
     init_status = true;
@@ -146,7 +146,5 @@ extern "C" void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 //该函数为虚函数，可以在子类中重新定义实现流程，也可以不实现（根据需求来）
 void SerialDevice::handleReceiveData(uint8_t byte)
 {
-	;
+    (void)byte;
 }
-
-

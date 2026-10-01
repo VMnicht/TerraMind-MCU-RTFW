@@ -7,10 +7,17 @@
 #include "../Driver/pwm_servo.h"
 #include "../Driver/debug_printer.h"
 #include "../Driver/pwm_esc.h"
+#include "../Driver/pc_port.h"
+#include "../Driver/pwm_open_loop_motor.h"
 
 #include <new>
 
-static DebugPrinter g_debug(&huart3);
+static DebugPrinter g_debug(&huart6);
+
+alignas(PcPort) static unsigned char g_pc_port_buf[sizeof(PcPort)];
+static PcPort *g_pc_port = nullptr;
+static PcProtocol::Command g_applied = {};
+static bool g_can_tx_failed = false;
 
 static diff_chassis::MechanicalConfig g_chassis_cfg;
 static diff_chassis *g_chassis = nullptr;
@@ -31,6 +38,9 @@ static PwmMotor *g_seeder_motor_r = nullptr;
 
 alignas(PwmEsc) static unsigned char g_esc_buf[sizeof(PwmEsc)];
 static PwmEsc *g_mowing_esc = nullptr;
+
+alignas(PwmOpenLoopMotor) static unsigned char g_spray_buf[sizeof(PwmOpenLoopMotor)];
+static PwmOpenLoopMotor *g_spray_pump = nullptr;
 
 static void init_chassis()
 {
@@ -63,6 +73,20 @@ static void init_cmd_port()
     g_cmd_port = new (g_cmd_port_buf) cmd_port(&huart5);
     g_cmd_port->startUartReceiveIT();
     g_debug.printf("[app] cmd_port ok (UART5)\n");
+}
+
+static void init_pc_port()
+{
+    g_pc_port = new (g_pc_port_buf) PcPort(&huart3);
+    if (g_pc_port->init_status)
+    {
+        g_pc_port->startUartReceiveIT();
+        g_debug.printf("[app] PC port ok (USART3)\n");
+    }
+    else
+    {
+        g_debug.printf("[app] PC port init failed\n");
+    }
 }
 
 static void init_seeder()
@@ -135,28 +159,75 @@ static void init_mowing()
     g_debug.printf("[app] mowing ok (ESC_A)\n");
 }
 
+static void init_spray()
+{
+    PwmOpenLoopMotor::HardwareConfig cfg;
+    cfg.motor_id = PwmEncBsp::MOTOR_B;
+    cfg.direction = PwmOpenLoopMotor::Direction::Forward; // B 口正向已实测确认。
+    cfg.min_throttle_percent = 70.0f; // 实测起转油门，非零 PC 油门映射到 70..100%。
+    g_spray_pump = new (g_spray_buf) PwmOpenLoopMotor(cfg);
+    g_debug.printf("[app] spray %s (B, forward, PC throttle -> %.1f..%.1f%% PWM)\n",
+                   g_spray_pump->is_valid() ? "ok" : "init failed",
+                   cfg.min_throttle_percent, cfg.max_throttle_percent);
+}
+
 extern "C" void App_ControlInit(void)
 {
     init_chassis();
     init_cmd_port();
+    init_pc_port();
     init_seeder();
     init_mowing();
+    init_spray();
 }
 
-static void run_control_loop()
+static void run_control_loop(uint32_t now)
 {
-    if (g_cmd_port == nullptr || g_chassis == nullptr)
+    PcProtocol::Command c = {};
+    if (g_pc_port != nullptr && g_pc_port->has_control())
     {
-        return;
+        if (g_pc_port->command_fresh(now))
+        {
+            c = g_pc_port->command();
+            if (!c.enable || c.stop) c = PcProtocol::Command{};
+        }
+        // Once USART3 has submitted a command, timeout holds a safe stop.
+        // UART5 cannot silently resume stale targets.
     }
+    else if (g_cmd_port != nullptr)
+    {
+        const CmdData &legacy = g_cmd_port->cmd;
+        c.linear_mps = legacy.linear_speed;
+        c.angular_radps = legacy.angular_speed;
+        c.left_on = legacy.left_seeder;
+        c.left_rpm = 200.0f;
+        c.right_on = legacy.right_seeder;
+        c.right_rpm = -200.0f;
+        c.mowing_on = legacy.mowing;
+        c.mowing_percent = 20.0f;
+    }
+    if (g_spray_pump != nullptr)
+    {
+        (void)g_spray_pump->set_throttle(c.spray_on ? c.spray_percent : 0.0f);
+        // 状态回报逻辑油门，映射后的 PWM 留在驱动中，避免二次映射。
+        c.spray_percent = g_spray_pump->get_target_throttle();
+        c.spray_on = c.spray_percent > 0.0f;
+    }
+    else
+    {
+        c.spray_on = false;
+        c.spray_percent = 0.0f;
+    }
+    g_applied = c;
 
-    const CmdData &c = g_cmd_port->cmd;
+    // 水泵独立执行；其余装置保留原有底盘初始化检查。
+    if (g_chassis == nullptr) return;
 
-    g_chassis->set_cmd_vel(c.linear_speed, c.angular_speed);
+    g_can_tx_failed = !g_chassis->set_cmd_vel(c.linear_mps, c.angular_radps);
 
     if (g_seeder_servo != nullptr)
     {
-        if (c.left_seeder)
+        if (c.left_on)
         {
             g_seeder_servo->set_angle(-80.0f);
         }
@@ -168,9 +239,9 @@ static void run_control_loop()
 
     if (g_seeder_motor != nullptr)
     {
-        if (c.left_seeder)
+        if (c.left_on)
         {
-            g_seeder_motor->control_speed(200.0f);
+            g_seeder_motor->control_speed(c.left_rpm);
         }
         else
         {
@@ -181,7 +252,7 @@ static void run_control_loop()
     // right_seeder
     if (g_seeder_servo_r != nullptr)
     {
-        if (c.right_seeder)
+        if (c.right_on)
         {
             g_seeder_servo_r->set_angle(-80.0f);
         }
@@ -193,9 +264,9 @@ static void run_control_loop()
 
     if (g_seeder_motor_r != nullptr)
     {
-        if (c.right_seeder)
+        if (c.right_on)
         {
-            g_seeder_motor_r->control_speed(-200.0f);
+            g_seeder_motor_r->control_speed(c.right_rpm);
         }
         else
         {
@@ -206,9 +277,9 @@ static void run_control_loop()
     // mowing (ESC_A)
     if (g_mowing_esc != nullptr)
     {
-        if (c.mowing)
+        if (c.mowing_on)
         {
-            g_mowing_esc->set_throttle(20.0f);
+            g_mowing_esc->set_throttle(c.mowing_percent);
         }
         else
         {
@@ -217,9 +288,64 @@ static void run_control_loop()
     }
 }
 
+static void send_pc_status(uint32_t now)
+{
+    if (g_pc_port == nullptr || !g_pc_port->init_status) return;
+    static uint32_t last_status = 0u;
+    if (now - last_status < 50u) return;
+    last_status = now;
+
+    PcProtocol::Status s = {};
+    s.uptime_ms = now;
+    s.last_command_seq = g_pc_port->last_command_seq();
+    s.result = g_pc_port->result();
+    s.mode = g_pc_port->has_control() ?
+        (g_pc_port->command_fresh(now) && g_pc_port->command().enable && !g_pc_port->command().stop ? 1u : 2u) : 0u;
+    s.capabilities = PcProtocol::CAP_CHASSIS | PcProtocol::CAP_LEFT_SEEDER |
+                     PcProtocol::CAP_RIGHT_SEEDER | PcProtocol::CAP_MOWING;
+    if (g_spray_pump != nullptr && g_spray_pump->is_valid()) s.capabilities |= PcProtocol::CAP_SPRAY;
+    if (g_pc_port->has_control() && !g_pc_port->command_fresh(now)) s.faults |= PcProtocol::FAULT_PC_TIMEOUT;
+    if (g_can_tx_failed) s.faults |= PcProtocol::FAULT_CAN_TX;
+    if (g_pc_port->rx_overflow()) s.faults |= PcProtocol::FAULT_RX_OVERFLOW;
+    const uint32_t age = g_pc_port->command_age_ms(now);
+    s.command_age_ms = age > 65535u ? 65535u : static_cast<uint16_t>(age);
+    s.rx_error_count = g_pc_port->error_count();
+    s.linear_mps = g_applied.linear_mps;
+    s.angular_radps = g_applied.angular_radps;
+    if (g_chassis != nullptr)
+    {
+        const M3508::State &ls = g_chassis->left_motor()->get_state();
+        const M3508::State &rs = g_chassis->right_motor()->get_state();
+        s.left_target_rpm = ls.target_output_rpm;
+        s.right_target_rpm = rs.target_output_rpm;
+        s.left_actual_rpm = ls.output_rpm;
+        s.right_actual_rpm = rs.output_rpm;
+    }
+    s.left_seeder_on = g_applied.left_on;
+    s.left_seeder_target_rpm = g_applied.left_on ? g_applied.left_rpm : 0.0f;
+    if (g_seeder_motor != nullptr) s.left_seeder_actual_rpm = g_seeder_motor->get_current_rpm();
+    if (g_seeder_servo != nullptr) s.left_servo_angle_deg = g_seeder_servo->get_current_angle();
+    s.right_seeder_on = g_applied.right_on;
+    s.right_seeder_target_rpm = g_applied.right_on ? g_applied.right_rpm : 0.0f;
+    if (g_seeder_motor_r != nullptr) s.right_seeder_actual_rpm = g_seeder_motor_r->get_current_rpm();
+    if (g_seeder_servo_r != nullptr) s.right_servo_angle_deg = g_seeder_servo_r->get_current_angle();
+    s.mowing_on = g_applied.mowing_on;
+    if (g_mowing_esc != nullptr) s.mowing_percent = g_mowing_esc->get_current_throttle();
+    s.spray_on = g_applied.spray_on;
+    s.spray_target_percent = g_applied.spray_percent;
+    // 无传感器反馈，不能将 PWM 油门冒充实测值。
+    s.spray_actual_percent = 0.0f;
+    s.spray_feedback_valid = false;
+    // Lift is reserved; no actuator or feedback is connected yet.
+    (void)g_pc_port->send_status(s);
+}
+
 extern "C" void App_ControlStep(void)
 {
-    run_control_loop();
+    const uint32_t now = HAL_GetTick();
+    if (g_pc_port != nullptr) g_pc_port->poll(now);
+    run_control_loop(now);
+    send_pc_status(now);
 
     if (g_chassis == nullptr)
     {
@@ -227,18 +353,16 @@ extern "C" void App_ControlStep(void)
     }
 
     static uint32_t last_print = 0u;
-    const uint32_t now = HAL_GetTick();
     if ((now - last_print) >= 500u)
     {
         last_print = now;
 
-        const CmdData &c = g_cmd_port->cmd;
         const M3508::State &ls = g_chassis->left_motor()->get_state();
         const M3508::State &rs = g_chassis->right_motor()->get_state();
 
         g_debug.printf("[ctrl] v=%.2f w=%.2f l=%d r=%d m=%d | L:%.0frpm %d | R:%.0frpm %d\n",
-                       c.linear_speed, c.angular_speed,
-                       c.left_seeder, c.right_seeder, c.mowing,
+                       g_applied.linear_mps, g_applied.angular_radps,
+                       g_applied.left_on, g_applied.right_on, g_applied.mowing_on,
                        ls.output_rpm, ls.command,
                        rs.output_rpm, rs.command);
     }

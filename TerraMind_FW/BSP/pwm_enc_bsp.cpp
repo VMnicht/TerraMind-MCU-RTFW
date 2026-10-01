@@ -1,10 +1,12 @@
 #include "pwm_enc_bsp.h"
+#include <float.h>
 
-PwmEncBsp::PwmEncBsp(MotorId motor_id)
+PwmEncBsp::PwmEncBsp(MotorId motor_id, bool enable_encoder)
     : config_{0},
       pwm_period_ch1_(0u),
       pwm_period_ch2_(0u),
-      is_valid_(false)
+      is_valid_(false),
+      encoder_enabled_(enable_encoder)
 {
     bind_motor_config(motor_id);
     if (!is_valid_)
@@ -16,13 +18,15 @@ PwmEncBsp::PwmEncBsp(MotorId motor_id)
     pwm_period_ch1_ = __HAL_TIM_GET_AUTORELOAD(config_.pwm_tim_ch1);
     pwm_period_ch2_ = __HAL_TIM_GET_AUTORELOAD(config_.pwm_tim_ch2);
 
+    // 启动通道前先清零，避免沿用旧比较值。
+    set_pwm_output(0);
     start_hardware();
 
-    // 构造完成后先关闭两路输出，避免对象刚创建时电机误动作。
-    set_pwm_output(0);
-
     // 将编码器计数器清零，保证第一次读取获得的是从对象创建后开始的增量值。
-    __HAL_TIM_SET_COUNTER(config_.encoder_tim, 0u);
+    if (encoder_enabled_ && is_valid_)
+    {
+        __HAL_TIM_SET_COUNTER(config_.encoder_tim, 0u);
+    }
 }
 
 void PwmEncBsp::set_pwm_output(int32_t pwm_output)
@@ -35,11 +39,11 @@ void PwmEncBsp::set_pwm_output(int32_t pwm_output)
     if (pwm_output > 0)
     {
         // 正转时仅 CH1 输出 PWM，CH2 保持关闭。
+        __HAL_TIM_SET_COMPARE(config_.pwm_tim_ch2, config_.pwm_channel_ch2, 0u);
         __HAL_TIM_SET_COMPARE(
             config_.pwm_tim_ch1,
             config_.pwm_channel_ch1,
             clamp_compare_value(static_cast<int64_t>(pwm_output), pwm_period_ch1_));
-        __HAL_TIM_SET_COMPARE(config_.pwm_tim_ch2, config_.pwm_channel_ch2, 0u);
         return;
     }
 
@@ -50,7 +54,7 @@ void PwmEncBsp::set_pwm_output(int32_t pwm_output)
         __HAL_TIM_SET_COMPARE(
             config_.pwm_tim_ch2,
             config_.pwm_channel_ch2,
-            clamp_compare_value(static_cast<int64_t>(-pwm_output), pwm_period_ch2_));
+            clamp_compare_value(-static_cast<int64_t>(pwm_output), pwm_period_ch2_));
         return;
     }
 
@@ -59,9 +63,30 @@ void PwmEncBsp::set_pwm_output(int32_t pwm_output)
     __HAL_TIM_SET_COMPARE(config_.pwm_tim_ch2, config_.pwm_channel_ch2, 0u);
 }
 
+bool PwmEncBsp::set_duty_percent(float percent)
+{
+    if (!is_valid_) return false;
+    if (!(percent >= -FLT_MAX && percent <= FLT_MAX))
+    {
+        set_pwm_output(0);
+        return false;
+    }
+    if (percent > 100.0f) percent = 100.0f;
+    if (percent < -100.0f) percent = -100.0f;
+    const bool reverse = percent < 0.0f;
+    const uint32_t period = reverse ? pwm_period_ch2_ : pwm_period_ch1_;
+    const float magnitude = reverse ? -percent : percent;
+    // 与原有电机接口一致：100% 对应 ARR（最大比较值）。
+    const int32_t compare = static_cast<int32_t>(magnitude * period / 100.0f + 0.5f);
+    set_pwm_output(reverse ? -compare : compare);
+    return true;
+}
+
+bool PwmEncBsp::is_valid() const { return is_valid_; }
+
 int32_t PwmEncBsp::get_encoder_count()
 {
-    if (!is_valid_)
+    if (!is_valid_ || !encoder_enabled_)
     {
         return 0;
     }
@@ -152,12 +177,21 @@ void PwmEncBsp::start_hardware()
     }
 
     // 启动电机对应的两路 PWM 输出。
-    (void)HAL_TIM_PWM_Start(config_.pwm_tim_ch1, config_.pwm_channel_ch1);
-    (void)HAL_TIM_PWM_Start(config_.pwm_tim_ch2, config_.pwm_channel_ch2);
+    const HAL_StatusTypeDef pwm1 = HAL_TIM_PWM_Start(config_.pwm_tim_ch1, config_.pwm_channel_ch1);
+    const HAL_StatusTypeDef pwm2 = HAL_TIM_PWM_Start(config_.pwm_tim_ch2, config_.pwm_channel_ch2);
+    if (pwm1 != HAL_OK || pwm2 != HAL_OK)
+    {
+        set_pwm_output(0);
+        is_valid_ = false;
+        return;
+    }
 
     // 启动编码器接口的两个通道。
-    (void)HAL_TIM_Encoder_Start(config_.encoder_tim, config_.encoder_channel_a);
-    (void)HAL_TIM_Encoder_Start(config_.encoder_tim, config_.encoder_channel_b);
+    if (encoder_enabled_)
+    {
+        (void)HAL_TIM_Encoder_Start(config_.encoder_tim, config_.encoder_channel_a);
+        (void)HAL_TIM_Encoder_Start(config_.encoder_tim, config_.encoder_channel_b);
+    }
 }
 
 int32_t PwmEncBsp::convert_encoder_count(uint32_t raw_count) const

@@ -125,6 +125,8 @@ CmdPort 是 TerraMind 主控板与上位机之间的 UART 串行通信协议，�
 
 ## 五、CRC16 校验
 
+当前 UART5 固件保留帧中两个 CRC 字节及接收状态，但不计算或比较 CRC。发送端仍须发送这两个字节，可直接填 `00 00`。下述算法仅作为字段定义参考；USART3 PC 协议仍独立执行 CRC 校验。
+
 ### 5.1 算法参数
 
 | 参数 | 值 |
@@ -284,64 +286,15 @@ FC FB 00 0B  CD CC 4C 3E 00 00 00 00 01 00 01  XX XX  FD FE
 
 ## 七、接收端状态机
 
-```
-                         ┌─────────────────┐
-                         │  WAIT_HEAD_0     │
-                         │  期望 0xFC       │
-                         └────────┬────────┘
-                                  │ 0xFC
-                                  ▼
-                         ┌─────────────────┐
-                         │  WAIT_HEAD_1     │──────── 非0xFB ──▶ WAIT_HEAD_0
-                         │  期望 0xFB       │
-                         └────────┬────────┘
-                                  │ 0xFB
-                                  ▼
-                         ┌─────────────────┐
-                         │  WAIT_ID         │
-                         │  存储 frame_id   │
-                         └────────┬────────┘
-                                  │ 任意值
-                                  ▼
-                         ┌─────────────────┐
-                         │  WAIT_LEN        │──── len > 64 ──▶ WAIT_HEAD_0
-                         │  存储 data_len   │
-                         └────────┬────────┘
-                                  │ len ≤ 64
-                                  ▼
-                         ┌─────────────────┐
-                         │  WAIT_DATA       │
-                         │  接收 N 字节     │──────────▶ WAIT_CRC_0
-                         └─────────────────┘
-                                  │
-                     ┌────────────┼────────────┐
-                     ▼            ▼            ▼
-              WAIT_CRC_0   WAIT_CRC_1   WAIT_END_0
-                  │            │        非0xFD → WAIT_HEAD_0
-                  └────────────┘            │ 0xFD
-                       │                    ▼
-                       ▼              WAIT_END_1
-                 WAIT_END_0           │ 非0xFE → WAIT_HEAD_0
-                       │              │ 0xFE
-                       ▼              ▼
-                 WAIT_END_1    [CRC校验失败?]
-                       │         ├─ 丢弃,返回 WAIT_HEAD_0
-                       │ 0xFE    │
-                       ▼         └─ 通过 → parse_data() → 更新 cmd
-                 [CRC 校验]
-                       │
-            ┌──────────┴──────────┐
-            ▼                     ▼
-        失败: 丢弃            通过: parse_data()
-                                         │
-                                         ▼
-                                   更新 CmdData 结构体
-                                         │
-                                         ▼
-                                   WAIT_HEAD_0
+```text
+WAIT_HEAD_0 (FC) → WAIT_HEAD_1 (FB) → WAIT_ID
+    → WAIT_LEN (必须为 11) → WAIT_DATA (11 字节)
+    → WAIT_CRC_0 (保留第 1 字节) → WAIT_CRC_1 (保留第 2 字节)
+    → WAIT_END_0 (FD) → WAIT_END_1 (FE)
+    → parse_data() → 更新 CmdData → WAIT_HEAD_0
 ```
 
-> 任何状态收到非预期值：立即回退到 `WAIT_HEAD_0`，自动重新同步。
+帧头、长度或帧尾不符合要求时回退到 `WAIT_HEAD_0`。两个 CRC 字节仍占用原有位置，但不参与校验。
 
 ---
 
@@ -351,9 +304,8 @@ FC FB 00 0B  CD CC 4C 3E 00 00 00 00 01 00 01  XX XX  FD FE
 |----------|-----------|
 | 帧头[0] != 0xFC | 保持在 WAIT_HEAD_0，丢弃该字节 |
 | 帧头[1] != 0xFB | 回退到 WAIT_HEAD_0 |
-| Data Length = 0 | 直接进入 data 接收（0 字节后立即进 CRC） |
-| Data Length > 64 | 回退到 WAIT_HEAD_0 |
-| CRC16 校验失败 | 丢弃整帧，不更新 cmd |
+| Data Length != 11 | 回退到 WAIT_HEAD_0 |
+| CRC16 为任意值 | 接收并保留两个字节，不校验其数值 |
 | 帧尾[0] != 0xFD | 回退到 WAIT_HEAD_0 |
 | 帧尾[1] != 0xFE | 回退到 WAIT_HEAD_0 |
 | 数据段 < 11 字节 | `parse_data()` 返回，不更新 cmd |

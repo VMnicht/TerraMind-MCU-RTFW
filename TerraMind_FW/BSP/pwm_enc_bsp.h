@@ -28,8 +28,8 @@ public:
         MOTOR_D
     };
 
-    // 构造时只需要传入电机编号，类内部会自动绑定对应的 PWM 与编码器资源。
-    explicit PwmEncBsp(MotorId motor_id);
+    // 开环电机传入 false，仅启动 PWM；原有闭环电机默认启用编码器。
+    explicit PwmEncBsp(MotorId motor_id, bool enable_encoder = true);
 
     // 设置电机两路 PWM 输出。
     // 约定传入值为有符号控制量：
@@ -37,6 +37,10 @@ public:
     // pwm_output < 0 时，CH2 输出 PWM，CH1 关闭；
     // pwm_output = 0 时，两路都关闭。
     void set_pwm_output(int32_t pwm_output);
+
+    // 有符号百分比对应固定接口的正反向，按实际 ARR 换算。
+    bool set_duty_percent(float percent);
+    bool is_valid() const;
 
     // 获取编码器自上次读取以来的增量计数，并在读取后自动清零计数器。
     int32_t get_encoder_count();
@@ -64,6 +68,7 @@ private:
     uint32_t pwm_period_ch1_;
     uint32_t pwm_period_ch2_;
     bool is_valid_;
+    bool encoder_enabled_;
 };
 
 #endif
