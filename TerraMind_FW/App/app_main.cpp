@@ -48,7 +48,9 @@ static void init_chassis()
     g_chassis_cfg.wheel_diameter_m = 0.10f;
     g_chassis_cfg.max_linear_speed_mps = 0.35f;
     g_chassis_cfg.max_angular_speed_rad = 2.0f;
-		g_chassis_cfg.right_reversed = true;
+    g_chassis_cfg.right_reversed = true;
+    // 实测直行正确、左右转相反，仅修正角速度符号。串口仍约定正值左转。
+    g_chassis_cfg.angular_reversed = true;
 
     if (!CAN_BUS.init_default(&hcan1))
     {

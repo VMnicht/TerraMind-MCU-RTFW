@@ -18,7 +18,8 @@ diff_chassis::MechanicalConfig::MechanicalConfig()
       left_wheel_scale(1.0f),
       right_wheel_scale(1.0f),
       left_reversed(false),
-      right_reversed(false)
+      right_reversed(false),
+      angular_reversed(false)
 {
 }
 
@@ -107,7 +108,8 @@ diff_chassis::WheelTarget diff_chassis::calc_wheel_target_rpm(float linear_speed
 
     // 对整体线速度和角速度进行限幅
     const float v = clamp_if_enabled(linear_speed_mps, cfg_.max_linear_speed_mps);
-    const float w = clamp_if_enabled(angular_speed_rad, cfg_.max_angular_speed_rad);
+    const float limited_w = clamp_if_enabled(angular_speed_rad, cfg_.max_angular_speed_rad);
+    const float w = cfg_.angular_reversed ? -limited_w : limited_w;
     
     // 防止除零或非法的极小轮距
     const float half_track = 0.5f * ((cfg_.wheel_track_m > kMinPositive) ? cfg_.wheel_track_m : kMinPositive);

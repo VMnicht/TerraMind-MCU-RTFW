@@ -38,7 +38,7 @@ def main():
             "BSP/pwm_esc_bsp.cpp")]
         app = build("spray_app", app_sources)
         subprocess.run([app], check=True)
-    print("PASS: protocol, calibrated PWM, PC pump control/stop/timeout, and unchanged other actuator outputs")
+    print("PASS: protocol, calibrated PWM, PC pump control/stop/timeout, UART5/PC chassis direction, and unchanged other actuator outputs")
 
 
 if __name__ == "__main__":

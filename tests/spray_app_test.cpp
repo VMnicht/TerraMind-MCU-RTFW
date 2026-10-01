@@ -19,12 +19,13 @@ bool CanBsp::send_raw(const TxHeader &, uint8_t data[8])
 }
 
 static void append_float(uint8_t *&p, float v) { memcpy(p, &v, 4); p += 4; }
-static void submit_pc(bool enable, bool stop, bool spray_on, float percent)
+static void submit_pc(bool enable, bool stop, bool spray_on, float percent,
+                      float linear = 0.1f, float angular = 0.3f)
 {
     uint8_t frame[60] = {0xfc, 0xfb, 1, 1, 1, 0, 48, 0};
     uint8_t *p = frame + 8;
     *p++ = 0x01; *p++ = 1; *p++ = (enable ? 1 : 0) | (stop ? 2 : 0);
-    *p++ = 0x10; *p++ = 8; append_float(p, 0.1f); append_float(p, 0.3f);
+    *p++ = 0x10; *p++ = 8; append_float(p, linear); append_float(p, angular);
     *p++ = 0x20; *p++ = 5; *p++ = 1; append_float(p, 125.0f);
     *p++ = 0x21; *p++ = 5; *p++ = 1; append_float(p, -150.0f);
     *p++ = 0x30; *p++ = 5; *p++ = 1; append_float(p, 30.0f);
@@ -71,6 +72,37 @@ static void other_outputs(uint32_t out[15])
     for (unsigned i = 0; i < 8; ++i) out[7 + i] = last_can[i];
 }
 
+static void check_chassis_direction(bool pc)
+{
+    // Independently calculated motor-ID RPMs for the calibrated physical robot:
+    // straight motion stays the same; turns reverse relative to the old firmware.
+    const float cases[][4] = {
+        {0.2f, 0.0f, 38.197186f, -38.197186f},
+        {-0.2f, 0.0f, -38.197186f, 38.197186f},
+        {0.0f, 1.0f, 30.557749f, 30.557749f},
+        {0.0f, -1.0f, -30.557749f, -30.557749f},
+        {0.2f, 1.0f, 68.754936f, -7.639437f},
+        {0.2f, -1.0f, 7.639437f, -68.754936f},
+        {0.0f, 0.0f, 0.0f, 0.0f},
+    };
+    for (const auto &c : cases)
+    {
+        if (pc)
+            submit_pc(true, false, false, 0.0f, c[0], c[1]);
+        else
+        {
+            g_cmd_port->cmd.linear_speed = c[0];
+            g_cmd_port->cmd.angular_speed = c[1];
+            App_ControlStep();
+        }
+        assert(fabsf(g_chassis->left_motor()->get_state().target_output_rpm - c[2]) < 0.001f);
+        assert(fabsf(g_chassis->right_motor()->get_state().target_output_rpm - c[3]) < 0.001f);
+        // Protocol/status retains the caller's sign; compensation happens once.
+        assert(g_applied.linear_mps == c[0] && g_applied.angular_radps == c[1]);
+        expect_pump(0.0f);
+    }
+}
+
 int main()
 {
     TIM_HandleTypeDef *timers[] = {&htim1, &htim2, &htim3, &htim4, &htim5, &htim8,
@@ -83,6 +115,7 @@ int main()
     test_tick = 10u;
     App_ControlStep();
     expect_pump(0.0f);
+    check_chassis_direction(false);
 
     // UART5 still drives the original devices; it never starts the PC-only pump.
     g_cmd_port->cmd.linear_speed = 0.15f;
@@ -151,6 +184,9 @@ int main()
     test_tick = 391u; App_ControlStep();
     expect_pump(0.0f); // Timeout must not fall back to stale UART5 commands.
     assert(g_applied.linear_mps == 0.0f && !g_applied.left_on);
+
+    test_tick = 395u;
+    check_chassis_direction(true);
 
     // Pump control and stop still run when no chassis object is available.
     g_chassis = nullptr;

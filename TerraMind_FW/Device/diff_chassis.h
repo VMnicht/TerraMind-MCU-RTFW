@@ -29,6 +29,7 @@ public:
         float right_wheel_scale;     // 右轮标定系数（用于补偿左右轮实际直径差异，默认1.0）
         bool left_reversed;          // 左轮安装方向是否反向（根据实际电机安装朝向设置）
         bool right_reversed;         // 右轮安装方向是否反向（根据实际电机安装朝向设置）
+        bool angular_reversed;       // 整车转向标定：仅反转角速度，不影响直行和电机安装方向
 
         MechanicalConfig();
     };
